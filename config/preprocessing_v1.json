@@ -1,0 +1,13 @@
+{
+  "version": "preprocessing_v1",
+  "timezone": "UTC",
+  "splits": {
+    "train": {"start": "2026-02-01T00:00:00Z", "end": "2026-06-01T00:00:00Z"},
+    "validation": {"start": "2026-06-01T00:00:00Z", "end": "2026-07-01T00:00:00Z"},
+    "test": {"start": "2026-07-01T00:00:00Z", "end": "2026-07-31T17:11:48Z"}
+  },
+  "label_availability": "closedAt strictly before split end",
+  "market_windows_minutes": [60, 240, 1440],
+  "max_candle_age_seconds": 60,
+  "test_status": "internal chronological holdout; descriptive statistics previously inspected"
+}
