@@ -1,0 +1,15 @@
+{
+  "version": "high_risk_features_v1",
+  "protocol": "config/validation_protocol_v2.json",
+  "primary_target": "unit",
+  "primary_quantile": 0.975,
+  "auxiliary_quantile": 0.95,
+  "minimum_cell_orders": 80,
+  "minimum_direction_orders": 60,
+  "strictly_above_threshold": true,
+  "nonpositive_threshold": "unavailable",
+  "feature_set": "pricing_time_core_v1",
+  "external_features": false,
+  "parameter_search": false,
+  "train_classifier": false
+}

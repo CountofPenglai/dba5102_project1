@@ -1,0 +1,19 @@
+{
+  "version": "rolling_calibration_v1",
+  "protocol": "config/validation_protocol_v2.json",
+  "controls": ["official_raw", "grouped_mean", "direction_scaled", "terminal_static"],
+  "candidates": ["hurdle_base", "direction_shrunk", "day_balanced_shrunk"],
+  "group_smoothing": 30,
+  "static_proxy_lambda": 0.01,
+  "hurdle_logistic_C": 0.1,
+  "hurdle_features": ["log_base", "log_remaining", "aligned_standardized_moneyness"],
+  "hurdle_standardized_clip": 3.0,
+  "calibration_shrink_lambda": 1.0,
+  "tail_quantile": 0.9,
+  "tail_minimum_history": 30,
+  "recovery_days": 3,
+  "recovery_daily_loss_quantile": 0.9,
+  "recovery_minimum_history_days": 10,
+  "external_signals": false,
+  "commercial_margin": false
+}

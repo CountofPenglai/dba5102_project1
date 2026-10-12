@@ -1,0 +1,15 @@
+{
+  "version": "rolling_validation_v2",
+  "timezone": "UTC",
+  "input_cohort": "immutable_preprocessing_v1_development_union",
+  "warmup_start": "2026-02-01T00:00:00Z",
+  "validation_start": "2026-04-01T00:00:00Z",
+  "validation_end": "2026-07-01T00:00:00Z",
+  "report_months": ["2026-04", "2026-05", "2026-06"],
+  "history_days": 30,
+  "minimum_history_orders": 100,
+  "label_rule": "created in [D-30d,D), closed strictly before D",
+  "scoring_label_cutoff": "2026-07-01T00:00:00Z",
+  "test_status": "July reserved; no test CSV or July price reads",
+  "selection": "Fixed exploratory candidates; no tuning or selection across these three months"
+}

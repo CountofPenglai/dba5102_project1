@@ -1,0 +1,2 @@
+# Optional plotting environment; separate from model-training dependencies.
+matplotlib==3.11.2

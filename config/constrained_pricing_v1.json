@@ -1,0 +1,17 @@
+{
+  "version": "constrained_pricing_v1",
+  "periods": {
+    "tuning": ["2026-06-01T00:00:00Z", "2026-06-21T00:00:00Z"],
+    "followup": ["2026-06-21T00:00:00Z", "2026-07-01T00:00:00Z"]
+  },
+  "lambdas": [0.1, 1, 10],
+  "flow_penalty_multiplier": 10,
+  "recent_tail_days": 7,
+  "tail_shrinkage_origins": 200,
+  "minimum_recent_origins": 100,
+  "tail_ratio_limits": [0.5, 2],
+  "feature_z_limits": [-3, 3],
+  "coefficient_limits": [-1, 1],
+  "proxy_coefficient_limits": [0, 1],
+  "selection": "minimum tuning overall RMSE; exact ties prefer larger lambda"
+}

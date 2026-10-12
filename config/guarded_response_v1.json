@@ -1,0 +1,10 @@
+{
+  "version": "guarded_response_v1",
+  "periods": {
+    "tuning": ["2026-06-01T00:00:00Z", "2026-06-21T00:00:00Z"],
+    "followup": ["2026-06-21T00:00:00Z", "2026-07-01T00:00:00Z"]
+  },
+  "calm_penalties": [0.01, 0.1, 1],
+  "upward_steps": [0.05, 0.1, 0.2],
+  "budgets": {"overall_rmse_vs_raw": 1.01, "calm_mae_vs_raw": 1.02, "tail_underprediction_vs_power5": 1.05}
+}

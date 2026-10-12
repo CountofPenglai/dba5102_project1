@@ -1,0 +1,25 @@
+{
+  "version": "high_risk_gbdt_v1",
+  "protocol": "config/validation_protocol_v2.json",
+  "targets": ["high_risk_unit_q975", "high_risk_unit_q950"],
+  "minimum_orders": 100,
+  "minimum_positives": 10,
+  "minimum_negatives": 20,
+  "minimum_positive_days": 3,
+  "classifier": {
+    "learning_rate": 0.05,
+    "max_iter": 80,
+    "max_leaf_nodes": 4,
+    "max_depth": 2,
+    "min_samples_leaf": 30,
+    "l2_regularization": 10.0,
+    "max_bins": 64,
+    "early_stopping": false,
+    "random_state": 20261009
+  },
+  "alarm_probability": 0.20,
+  "diagnostic_probabilities": [0.10, 0.20, 0.30, 0.50],
+  "alarm_multiplier": 1.5,
+  "parameter_search": false,
+  "use_test": false
+}

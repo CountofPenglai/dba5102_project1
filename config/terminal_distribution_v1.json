@@ -1,0 +1,19 @@
+{
+  "version": "terminal_distribution_v1",
+  "periods": {
+    "tuning": ["2026-06-01T00:00:00Z", "2026-06-21T00:00:00Z"],
+    "followup": ["2026-06-21T00:00:00Z", "2026-07-01T00:00:00Z"]
+  },
+  "lambdas": [0.01, 0.1, 1],
+  "market": {
+    "horizons_minutes": [30, 60, 120, 240, 480],
+    "window_days": 30,
+    "origin_stride_minutes": 30,
+    "signal_stride_minutes": 5,
+    "ewma_half_life_minutes": 60,
+    "continuous_warmup_minutes": 1440,
+    "sigma_floor": 0.000001,
+    "minimum_history_origins": 100,
+    "return_center": "zero_log_return"
+  }
+}

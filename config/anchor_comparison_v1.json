@@ -1,0 +1,9 @@
+{
+  "version": "anchor_comparison_v1",
+  "periods": {
+    "tuning": ["2026-06-01T00:00:00Z", "2026-06-21T00:00:00Z"],
+    "followup": ["2026-06-21T00:00:00Z", "2026-07-01T00:00:00Z"]
+  },
+  "lambdas": [0.1, 1, 10],
+  "rmse_tolerance": 0.01
+}
