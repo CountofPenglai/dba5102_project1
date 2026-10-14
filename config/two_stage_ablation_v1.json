@@ -1,0 +1,7 @@
+{
+  "version": "two_stage_ablation_v1",
+  "probabilities": ["direction_frequency", "direction_tenor_frequency", "logistic_probability"],
+  "tenor_smoothing": 30,
+  "calibration_bins": 10,
+  "protocol": "config/validation_protocol_v2.json"
+}
