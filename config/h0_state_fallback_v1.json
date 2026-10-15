@@ -1,0 +1,45 @@
+{
+  "version": "h0_state_fallback_v1",
+  "protocol": "config/validation_protocol_v3.json",
+  "models": [
+    "official_raw",
+    "h0",
+    "half_blend",
+    "state_fallback",
+    "history_blend",
+    "state_history_blend"
+  ],
+  "primary": "state_history_blend",
+  "warmup_start": "2026-04-03T00:00:00Z",
+  "history_days": 30,
+  "update_days": 7,
+  "state_smoothing_hours": 6,
+  "state_minimum_history_hours": 168,
+  "state_distance_quantiles": [
+    0.9,
+    0.99
+  ],
+  "state_scale": "median_iqr_div_1.349",
+  "minimum_oos_orders": 100,
+  "minimum_oos_days": 10,
+  "weight_shrinkage_orders": 100,
+  "weight_prior": 0.5,
+  "weight_bounds": [
+    0.0,
+    1.0
+  ],
+  "insufficient_history_alpha": 0.0,
+  "probability_model": "original_h0",
+  "time_decay": false,
+  "contract_residual": false,
+  "hourly_amount": false,
+  "parameter_search": false,
+  "reference_run": "outputs/model_studies/h0_time_decay_20261015",
+  "market_prefix_sha256": "cbf5d491d167ac377beb844dc9794e4f5e9986f72859035426f7789e67924b50",
+  "bootstrap_blocks": [
+    3,
+    7,
+    14
+  ],
+  "bootstrap_repeats": 2000
+}

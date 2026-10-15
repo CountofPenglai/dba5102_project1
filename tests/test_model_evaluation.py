@@ -67,6 +67,8 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(result["predicted_total_usdc"], 12.)
         self.assertEqual(result["actual_total_usdc"], 10.)
         self.assertEqual(result["total_bias_usdc"], 2.)
+        self.assertEqual(result.get("gross_overprediction_usdc"), 6.)
+        self.assertEqual(result.get("gross_underprediction_usdc"), 4.)
         self.assertIsNone(metrics(np.zeros(2), np.ones(2), np.ones(2))["predicted_actual_ratio"])
 
     def test_sparse_history_is_not_silently_replaced(self):
@@ -74,6 +76,34 @@ class EvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "history"):
             evaluate(pool_fixture(), "validation", resolve_config(load_model_config()),
                      model_factory=lambda *args: RecordedMean())
+
+    def test_opt_in_daily_direction_metrics_reconcile_with_overall(self):
+        _, evaluate, _ = self.api()
+        cfg = resolve_config(load_model_config() | {"min_train_rows": 1}, models=["gam"])
+        cfg["daily_direction_metrics"] = True
+        pool = pool_fixture()
+        pool.X.loc["today_late", "option_type"] = 1
+        _, daily = evaluate(pool, "validation", cfg, model_factory=lambda *args: RecordedMean())
+        self.assertIn("group", daily)
+        day = daily[(daily.cohort == "risk") & daily.day_utc.eq("2026-06-01T00:00:00+00:00")]
+        overall = day[day.group.eq("overall")].iloc[0]
+        groups = day[day.group.eq("option_type")]
+        self.assertEqual(groups.predicted_total_usdc.tolist(), [6., 3.])
+        self.assertEqual(groups.actual_total_usdc.sum(), overall.actual_total_usdc)
+        self.assertEqual(groups.orders.sum(), overall.orders)
+
+    def test_platform_activity_groups_use_only_legal_training_thresholds(self):
+        _, evaluate, _ = self.api()
+        cfg = resolve_config(load_model_config() | {"min_train_rows": 1}, models=["gam"])
+        cfg['activity_metrics'] = True
+        pool = pool_fixture()
+        pool.X['platform_call_count_240m'] = [9999, 0, 10, 9999, 9, 1, 9999]
+        pool.X['platform_put_count_240m'] = 0
+        summary, _ = evaluate(pool, 'validation', cfg, model_factory=lambda *args: RecordedMean(),
+                              period=['2026-06-01T00:00:00Z', '2026-06-03T00:00:00Z'])
+        groups = summary[(summary.cohort == 'risk') & summary.group.eq('platform_activity_group')]
+        self.assertEqual(groups.set_index('value').orders.to_dict(), {'high': 2, 'normal': 1})
+        self.assertEqual(groups.actual_total_usdc.sum(), 30.)
 
 
 if __name__ == "__main__":

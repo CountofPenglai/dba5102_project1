@@ -22,14 +22,14 @@ def study_snapshot(dataset_dir):
     return source
 
 
-def plan_study(pool, base, study):
-    resolved = validate_study(base, study)
+def plan_study(pool, base, study, models=None):
+    resolved = validate_study(base, study, models)
     periods = {phase: coverage(pool, "validation", resolved, period)
                for phase, period in study["periods"].items()}
     if any(v["insufficient_history_days"] for v in periods.values()):
         raise ValueError("Insufficient history for this study")
     rows = []
-    for model in MODEL_NAMES:
+    for model in resolved["selected_models"]:
         n = 1 + sum(len(s["values"]) - 1 for s in study["stages"][model])
         tuning = n * periods["tuning"]["prediction_days"]
         confirmation = periods["confirmation"]["prediction_days"]
@@ -37,6 +37,7 @@ def plan_study(pool, base, study):
         rows.append({"model": model, "max_candidates": n, "tuning_fits": tuning,
                      "confirmation_fits": confirmation, "estimated_fit_seconds": seconds})
     return {"training_performed": False, "test_csv_read": False, "periods": periods,
+            "selected_models": resolved["selected_models"],
             "models": rows, "max_model_fits": sum(r["tuning_fits"] + r["confirmation_fits"] for r in rows),
             "baseline_updates": 2 * sum(p["prediction_days"] for p in periods.values()),
             "estimated_total_fit_seconds": [sum(r["estimated_fit_seconds"][i] for r in rows) for i in (0, 1)],
@@ -80,9 +81,10 @@ def _comparisons(records, cohort):
 
 
 def run_study(root, run_id, base, study, pool, source, resume=False, evaluator=evaluate,
-              progress=None, source_check=None, dataset_dir=DEFAULT_OUTPUT):
-    plan = plan_study(pool, base, study)
-    identity = {"base": base, "study": study, "source": source}
+              progress=None, source_check=None, dataset_dir=DEFAULT_OUTPUT, models=None):
+    plan = plan_study(pool, base, study, models)
+    identity = {"base": base, "study": study, "source": source,
+                "selected_models": plan["selected_models"]}
     with study_workspace(root, run_id, identity, resume, dataset_dir) as store:
         records, selected = {}, {}
         def trial(raw, model, phase, baseline=False):
@@ -110,7 +112,7 @@ def run_study(root, run_id, base, study, pool, source, resume=False, evaluator=e
         # Establish the cheap tuning references before fitting any complex model.
         for model in BASELINES:
             trial(base, model, "tuning", baseline=True)
-        for model in MODEL_NAMES:
+        for model in plan["selected_models"]:
             current, candidates = copy.deepcopy(base), {}
             for stage in study["stages"][model]:
                 for value in stage["values"]:

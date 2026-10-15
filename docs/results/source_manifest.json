@@ -1,0 +1,321 @@
+{
+  "version": "h0_main_results_v1",
+  "note": "Historical aggregate excerpts, not complete runnable experiment archives. No new training or evaluation. Original full manifests and source ZIPs remain in the research checkout.",
+  "files": [
+    {
+      "source": "outputs/model_studies/h0_time_decay_20261015/metrics/validation/intervals.csv",
+      "source_sha256": "55912733edc6070fcf21a74c07c47a47772a2559a2af9832deaaf9007f752ca9",
+      "saved": "h0_time_decay_20261015/validation/intervals.csv",
+      "saved_sha256": "b89b93cc51d4b21caa6f7ae6cd9d278bbbff543f2d0c15c60bd4363607c0caf6",
+      "rule": "scope == 'all', metric == 'rmse_delta', block_days == 7; other fields unchanged"
+    },
+    {
+      "source": "outputs/model_studies/h0_time_decay_20261015/metrics/validation/macro_monthly.csv",
+      "source_sha256": "111c9e6effa7218b1bd5e88824a3aecbc2ce2240f0b1d518f0c08b54afdefa65",
+      "saved": "h0_time_decay_20261015/validation/macro_monthly.csv",
+      "saved_sha256": "111c9e6effa7218b1bd5e88824a3aecbc2ce2240f0b1d518f0c08b54afdefa65",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_time_decay_20261015/metrics/validation/risk_constraints.csv",
+      "source_sha256": "1737d43cba8111d847c23ed1052ad0b8ce6fd817b32075df84b8ebe4e2c5a328",
+      "saved": "h0_time_decay_20261015/validation/risk_constraints.csv",
+      "saved_sha256": "1737d43cba8111d847c23ed1052ad0b8ce6fd817b32075df84b8ebe4e2c5a328",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_time_decay_20261015/metrics/validation/summary.csv",
+      "source_sha256": "4e62f06b91e6c20adc483a4ae25cb94650b27b3d43b1e3a091b1986df2365aec",
+      "saved": "h0_time_decay_20261015/validation/summary.csv",
+      "saved_sha256": "4e62f06b91e6c20adc483a4ae25cb94650b27b3d43b1e3a091b1986df2365aec",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_hourly_amount_20261015/metrics/validation/intervals.csv",
+      "source_sha256": "18cfa1c0874510387356158be5c86268be1efcb847fbc92ffa9b9cdb160fca0d",
+      "saved": "h0_hourly_amount_20261015/validation/intervals.csv",
+      "saved_sha256": "80308521c221861ad79a788d1bcfac4ac974d2fadb56efe70b3a70257e22fbc5",
+      "rule": "scope == 'all', metric == 'rmse_delta', block_days == 7; other fields unchanged"
+    },
+    {
+      "source": "outputs/model_studies/h0_hourly_amount_20261015/metrics/validation/macro_monthly.csv",
+      "source_sha256": "88d0122635767fc55b363911bd589f907e2dd38636e824d36ebdcf05426f0286",
+      "saved": "h0_hourly_amount_20261015/validation/macro_monthly.csv",
+      "saved_sha256": "88d0122635767fc55b363911bd589f907e2dd38636e824d36ebdcf05426f0286",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_hourly_amount_20261015/metrics/validation/monthly_risk_constraints.csv",
+      "source_sha256": "a3d06abde8e8df28d6b649d9e53b4595114476ec17e7854cb4eed158d3d7e4e3",
+      "saved": "h0_hourly_amount_20261015/validation/monthly_risk_constraints.csv",
+      "saved_sha256": "a3d06abde8e8df28d6b649d9e53b4595114476ec17e7854cb4eed158d3d7e4e3",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_hourly_amount_20261015/metrics/validation/risk_constraints.csv",
+      "source_sha256": "c472254eab42b7a55fe9f30783ddd2466302c830defa207401fb3aa011be1c3e",
+      "saved": "h0_hourly_amount_20261015/validation/risk_constraints.csv",
+      "saved_sha256": "c472254eab42b7a55fe9f30783ddd2466302c830defa207401fb3aa011be1c3e",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_hourly_amount_20261015/metrics/validation/summary.csv",
+      "source_sha256": "c43f39729c949b73f28a3da4f18b0ed387239e0008c200f84e4769f2cdcfc934",
+      "saved": "h0_hourly_amount_20261015/validation/summary.csv",
+      "saved_sha256": "c43f39729c949b73f28a3da4f18b0ed387239e0008c200f84e4769f2cdcfc934",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_state_fallback_20261015/metrics/validation/intervals.csv",
+      "source_sha256": "a62be8b3a391046acb46c219e51d14bdcc36af2a6637ec4170ec7deccc4d7161",
+      "saved": "h0_state_fallback_20261015/validation/intervals.csv",
+      "saved_sha256": "63f146a6b274a93dd845821b397c460ac188f766c6371a8f03d8683d9f96499f",
+      "rule": "scope == 'all', metric == 'rmse_delta', block_days == 7; other fields unchanged"
+    },
+    {
+      "source": "outputs/model_studies/h0_state_fallback_20261015/metrics/validation/macro_monthly.csv",
+      "source_sha256": "08214d78051c3a450895ff775ec21525801206527259b101803de2a675c5ecd0",
+      "saved": "h0_state_fallback_20261015/validation/macro_monthly.csv",
+      "saved_sha256": "08214d78051c3a450895ff775ec21525801206527259b101803de2a675c5ecd0",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_state_fallback_20261015/metrics/validation/monthly_risk_constraints.csv",
+      "source_sha256": "9135a90f9b329907674a1afba9d76f75c3cf4934218ba5045d1a70af4df2b678",
+      "saved": "h0_state_fallback_20261015/validation/monthly_risk_constraints.csv",
+      "saved_sha256": "9135a90f9b329907674a1afba9d76f75c3cf4934218ba5045d1a70af4df2b678",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_state_fallback_20261015/metrics/validation/risk_constraints.csv",
+      "source_sha256": "eeccb7b106ee329440754e5df4416693629f4a47d4344c42711e8c137bc41a2e",
+      "saved": "h0_state_fallback_20261015/validation/risk_constraints.csv",
+      "saved_sha256": "eeccb7b106ee329440754e5df4416693629f4a47d4344c42711e8c137bc41a2e",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_state_fallback_20261015/metrics/validation/summary.csv",
+      "source_sha256": "809ac1c685066eb702e786771073841d710364bb51642ba70cbbe5941cef8c43",
+      "saved": "h0_state_fallback_20261015/validation/summary.csv",
+      "saved_sha256": "809ac1c685066eb702e786771073841d710364bb51642ba70cbbe5941cef8c43",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_ratios_20261015/metrics/validation/fixed_grid.csv",
+      "source_sha256": "727762f414a95828e9b21b3ad932295b3c33845558d00dc6f8da50bbe994dbb4",
+      "saved": "h0_blend_ratios_20261015/validation/fixed_grid.csv",
+      "saved_sha256": "727762f414a95828e9b21b3ad932295b3c33845558d00dc6f8da50bbe994dbb4",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_ratios_20261015/metrics/validation/intervals.csv",
+      "source_sha256": "ba2290dc6f65690f78446793ca2fc357fe6a793ed42ff499e9679a020ed9db97",
+      "saved": "h0_blend_ratios_20261015/validation/intervals.csv",
+      "saved_sha256": "32cc16c2d182ef891ccd74b8cc4ef93d994f1ea4a81ce4ded8f4157cd0557cbb",
+      "rule": "scope == 'all', metric == 'rmse_delta', block_days == 7; other fields unchanged"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_ratios_20261015/metrics/validation/macro_monthly.csv",
+      "source_sha256": "a61f0281d3689ab6a9001b24c8fc30c219634591555f35cf0b9bbb5ae076ac4c",
+      "saved": "h0_blend_ratios_20261015/validation/macro_monthly.csv",
+      "saved_sha256": "a61f0281d3689ab6a9001b24c8fc30c219634591555f35cf0b9bbb5ae076ac4c",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_ratios_20261015/metrics/validation/monthly_risk_constraints.csv",
+      "source_sha256": "23c8a347a6c814bcc4c7a1e4fbd106620f1068c145a914cc550060dc983eeda1",
+      "saved": "h0_blend_ratios_20261015/validation/monthly_risk_constraints.csv",
+      "saved_sha256": "23c8a347a6c814bcc4c7a1e4fbd106620f1068c145a914cc550060dc983eeda1",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_ratios_20261015/metrics/validation/risk_constraints.csv",
+      "source_sha256": "40c4a26049fd70c4fef4d03848daf41f14b42cbf7e7fbe43d28f12c69cec8260",
+      "saved": "h0_blend_ratios_20261015/validation/risk_constraints.csv",
+      "saved_sha256": "40c4a26049fd70c4fef4d03848daf41f14b42cbf7e7fbe43d28f12c69cec8260",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_ratios_20261015/metrics/validation/summary.csv",
+      "source_sha256": "fb848dbde3c547712952989a80fa3c6ca835cba67f36b8f3fc7cb5db5921f004",
+      "saved": "h0_blend_ratios_20261015/validation/summary.csv",
+      "saved_sha256": "fb848dbde3c547712952989a80fa3c6ca835cba67f36b8f3fc7cb5db5921f004",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_fine_20261015/metrics/validation/fixed_grid.csv",
+      "source_sha256": "aed0c0a3acbf70e932b45c4e84544d61a14d17feca3eacc30c27cde5e3277f79",
+      "saved": "h0_blend_fine_20261015/validation/fixed_grid.csv",
+      "saved_sha256": "aed0c0a3acbf70e932b45c4e84544d61a14d17feca3eacc30c27cde5e3277f79",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_fine_20261015/metrics/validation/intervals.csv",
+      "source_sha256": "f5f88c88e0a9c32777bd4b9838ec3caa94c429f86096fd72a63fe7a2577277dc",
+      "saved": "h0_blend_fine_20261015/validation/intervals.csv",
+      "saved_sha256": "f7924118d41a9efac48736c35bdc35c6672b96155762679b0f95d80705ba2da6",
+      "rule": "scope == 'all', metric == 'rmse_delta', block_days == 7; other fields unchanged"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_fine_20261015/metrics/validation/macro_monthly.csv",
+      "source_sha256": "3657097cea05c7da8e95e3425a1422796910d464af64e4d2e96742b787236208",
+      "saved": "h0_blend_fine_20261015/validation/macro_monthly.csv",
+      "saved_sha256": "3657097cea05c7da8e95e3425a1422796910d464af64e4d2e96742b787236208",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_fine_20261015/metrics/validation/monthly_risk_constraints.csv",
+      "source_sha256": "cae9d46817ad7610f1d0720330d665479b8ba56ca08735a117e93f4432c8bdff",
+      "saved": "h0_blend_fine_20261015/validation/monthly_risk_constraints.csv",
+      "saved_sha256": "cae9d46817ad7610f1d0720330d665479b8ba56ca08735a117e93f4432c8bdff",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_fine_20261015/metrics/validation/risk_constraints.csv",
+      "source_sha256": "6e33a94141ee213f186274d6a8525b04d20fcbf7d0a11b3db3722d3bfd719afd",
+      "saved": "h0_blend_fine_20261015/validation/risk_constraints.csv",
+      "saved_sha256": "6e33a94141ee213f186274d6a8525b04d20fcbf7d0a11b3db3722d3bfd719afd",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/h0_blend_fine_20261015/metrics/validation/summary.csv",
+      "source_sha256": "1d499d9f1936e1133bbc88be98b84193fd02d835f54b8beea27bfc2522fba3ee",
+      "saved": "h0_blend_fine_20261015/validation/summary.csv",
+      "saved_sha256": "1d499d9f1936e1133bbc88be98b84193fd02d835f54b8beea27bfc2522fba3ee",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/development/assessment.csv",
+      "source_sha256": "9a0235971c57cee6e0664c05c74f11d912173faf93979ec5093b8be6a219464d",
+      "saved": "macro_multiplier_20261014_v2/development/assessment.csv",
+      "saved_sha256": "9a0235971c57cee6e0664c05c74f11d912173faf93979ec5093b8be6a219464d",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/development/macro_monthly.csv",
+      "source_sha256": "95ceb5c2ba10dcc46db54d40d4e5f2aa48d3bc09c8b16efb32be5eb138e13dd7",
+      "saved": "macro_multiplier_20261014_v2/development/macro_monthly.csv",
+      "saved_sha256": "95ceb5c2ba10dcc46db54d40d4e5f2aa48d3bc09c8b16efb32be5eb138e13dd7",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/development/risk_constraints.csv",
+      "source_sha256": "942b919ef0cd7d81485daf4f243bfb2adb4b64d7594a43d356c32ec723c6d65e",
+      "saved": "macro_multiplier_20261014_v2/development/risk_constraints.csv",
+      "saved_sha256": "942b919ef0cd7d81485daf4f243bfb2adb4b64d7594a43d356c32ec723c6d65e",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/development/summary.csv",
+      "source_sha256": "62662ec9a8552fd6923eb5ed3d4581e68af7ae6bcd5e4947b32ad4270caa3b3e",
+      "saved": "macro_multiplier_20261014_v2/development/summary.csv",
+      "saved_sha256": "62662ec9a8552fd6923eb5ed3d4581e68af7ae6bcd5e4947b32ad4270caa3b3e",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/july_pressure/assessment.csv",
+      "source_sha256": "c493f6ab77da14d5132deceabacc785b102286339f2fad5a40a0aac57f9d5599",
+      "saved": "macro_multiplier_20261014_v2/july_pressure/assessment.csv",
+      "saved_sha256": "c493f6ab77da14d5132deceabacc785b102286339f2fad5a40a0aac57f9d5599",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/july_pressure/macro_monthly.csv",
+      "source_sha256": "707e4a9c79a6b12fd261294a5afa94f391163965a5deab2f0efd1a6c95517122",
+      "saved": "macro_multiplier_20261014_v2/july_pressure/macro_monthly.csv",
+      "saved_sha256": "707e4a9c79a6b12fd261294a5afa94f391163965a5deab2f0efd1a6c95517122",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/july_pressure/risk_constraints.csv",
+      "source_sha256": "7bb8376143022c4cf6733f39bb663082289b2174dd3bbe7f2586934a3d282919",
+      "saved": "macro_multiplier_20261014_v2/july_pressure/risk_constraints.csv",
+      "saved_sha256": "7bb8376143022c4cf6733f39bb663082289b2174dd3bbe7f2586934a3d282919",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/july_pressure/summary.csv",
+      "source_sha256": "3bdc8ec93d3a15442cba0483fc5b3c7727eed33913f6af8b885cab69facfcc51",
+      "saved": "macro_multiplier_20261014_v2/july_pressure/summary.csv",
+      "saved_sha256": "3bdc8ec93d3a15442cba0483fc5b3c7727eed33913f6af8b885cab69facfcc51",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/model_studies/macro_multiplier_20261014_v2/metrics/training_event_diagnostics.csv",
+      "source_sha256": "e6d36a9a3de5fa5cd7e39790e2e03b9ffa4a3dd77c948768a078328b12792834",
+      "saved": "macro_multiplier_20261014_v2/training_event_diagnostics.csv",
+      "saved_sha256": "e6d36a9a3de5fa5cd7e39790e2e03b9ffa4a3dd77c948768a078328b12792834",
+      "rule": "byte-identical copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_events_20261014_v2/metrics/event_coverage.csv",
+      "source_sha256": "43c50c8c49532449b86c1946a075368be9c4fd3c3665098b0a0502a1fd5458e8",
+      "saved": "macro_events_20261014_v2/event_coverage.csv",
+      "saved_sha256": "43c50c8c49532449b86c1946a075368be9c4fd3c3665098b0a0502a1fd5458e8",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_events_20261014_v2/metrics/market_summary.csv",
+      "source_sha256": "557d78be51fe8d6fd36f51ee54017a4c0e3d6988e23af99f46b375e0720a946a",
+      "saved": "macro_events_20261014_v2/market_summary.csv",
+      "saved_sha256": "557d78be51fe8d6fd36f51ee54017a4c0e3d6988e23af99f46b375e0720a946a",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_events_20261014_v2/metrics/matched_summary.csv",
+      "source_sha256": "3b3e99ea79a3bf5c92679c0b05a372bd95df46139d16079a54af9e1954709c43",
+      "saved": "macro_events_20261014_v2/matched_summary.csv",
+      "saved_sha256": "3b3e99ea79a3bf5c92679c0b05a372bd95df46139d16079a54af9e1954709c43",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_phases_20261014_v2/metrics/balanced_order_summary.csv",
+      "source_sha256": "1ab4b370b0d2c75c3d05c3799e80c949f31a84812eda228452d0f6430c25255b",
+      "saved": "macro_phases_20261014_v2/balanced_order_summary.csv",
+      "saved_sha256": "1ab4b370b0d2c75c3d05c3799e80c949f31a84812eda228452d0f6430c25255b",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_phases_20261014_v2/metrics/cross_event_support.csv",
+      "source_sha256": "e961764515ccdb24c8feaf587020cbc10d81aa1a19e1ddaac09fdc134809c221",
+      "saved": "macro_phases_20261014_v2/cross_event_support.csv",
+      "saved_sha256": "e961764515ccdb24c8feaf587020cbc10d81aa1a19e1ddaac09fdc134809c221",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_phases_20261014_v2/metrics/exposure_support.csv",
+      "source_sha256": "bb80ccebb80f7e34f2757b43d82eaee38da1004866a37d33fb4de7b9d689ba42",
+      "saved": "macro_phases_20261014_v2/exposure_support.csv",
+      "saved_sha256": "bb80ccebb80f7e34f2757b43d82eaee38da1004866a37d33fb4de7b9d689ba42",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_phases_20261014_v2/metrics/historical_support.csv",
+      "source_sha256": "6ed4bdf957d1dde15903630f5caac4be2a56688c68902673447ad8be43e5eb97",
+      "saved": "macro_phases_20261014_v2/historical_support.csv",
+      "saved_sha256": "6ed4bdf957d1dde15903630f5caac4be2a56688c68902673447ad8be43e5eb97",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_phases_20261014_v2/metrics/market_summary.csv",
+      "source_sha256": "fd5048df12eb29660519db062b2d5ec74b2dbbad4c9f9127699a7e1e8f706bfd",
+      "saved": "macro_phases_20261014_v2/market_summary.csv",
+      "saved_sha256": "fd5048df12eb29660519db062b2d5ec74b2dbbad4c9f9127699a7e1e8f706bfd",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_phases_20261014_v2/metrics/matched_summary.csv",
+      "source_sha256": "9e2314847721fa75a80b7c431aca06c3e6fd104ac68787d31ce47d54190a880e",
+      "saved": "macro_phases_20261014_v2/matched_summary.csv",
+      "saved_sha256": "9e2314847721fa75a80b7c431aca06c3e6fd104ac68787d31ce47d54190a880e",
+      "rule": "byte-identical aggregate copy"
+    },
+    {
+      "source": "outputs/diagnostics/macro_phases_20261014_v2/metrics/order_summary.csv",
+      "source_sha256": "237a5029eb6d48511fed0cc6fd2aa02dd20d72ba5c2a7108c89c088268792706",
+      "saved": "macro_phases_20261014_v2/order_summary.csv",
+      "saved_sha256": "237a5029eb6d48511fed0cc6fd2aa02dd20d72ba5c2a7108c89c088268792706",
+      "rule": "byte-identical aggregate copy"
+    }
+  ]
+}
