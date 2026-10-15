@@ -1,5 +1,5 @@
-"""Canonical preprocessing and model data access for PP research."""
+"""Flat canonical preprocessing and model data access for PP research."""
 
-from .io import load_split
+from .io import ModelData, load_dataset
 
-__all__ = ["load_split"]
+__all__ = ["ModelData", "load_dataset"]

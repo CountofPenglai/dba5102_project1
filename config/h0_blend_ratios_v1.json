@@ -161,7 +161,6 @@
   "fixed_grid_exploration": true,
   "monthly_oracle_selection": false,
   "adaptive_search": false,
-  "reference_run": "outputs/model_studies/h0_state_fallback_20261015",
   "bootstrap_blocks": [
     3,
     7,

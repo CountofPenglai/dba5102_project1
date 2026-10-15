@@ -3,7 +3,7 @@ import importlib.util
 import unittest
 import numpy as np
 import pandas as pd
-from pp_data.io import ModelSplit
+from pp_data.io import ModelData
 from pp_data.features import BASE_FEATURE
 from pp_models.h0_time_decay_study import PROTOCOL, predict_period
 from test_h0_time_decay import fixture
@@ -29,7 +29,7 @@ class UnifiedReportTests(unittest.TestCase):
         changed = self.pool.y.copy()
         created = self.pool.metadata.created_at_utc
         changed.loc[created.ge('2026-05-01') & created.lt('2026-05-08')] = 100000.
-        p = ModelSplit(self.pool.X, changed, self.pool.metadata)
+        p = ModelData(self.pool.X, changed, self.pool.metadata)
         b, _, _ = self.study.predict_announcements(p, self.calendar, self.reference, self.protocol)
         first = a.origin.eq('2026-05-01T00:00:00+00:00')
         pd.testing.assert_frame_equal(a.loc[first], b.loc[first])
@@ -55,7 +55,7 @@ class UnifiedReportTests(unittest.TestCase):
         ref = self.reference.loc[self.reference.day.lt(protocol['validation_end'])]
         a, _, _ = self.study.predict_announcements(p, self.calendar, ref, protocol)
         meta = p.metadata.copy();meta.loc[meta.created_at_utc.ge('2026-05-01'), 'closed_at_utc'] = pd.NaT
-        b, _, _ = self.study.predict_announcements(ModelSplit(p.X, p.y, meta), self.calendar, ref, protocol)
+        b, _, _ = self.study.predict_announcements(ModelData(p.X, p.y, meta), self.calendar, ref, protocol)
         pd.testing.assert_frame_equal(a, b)
 
     def test_macro_preserves_cross_month_week_and_support_fallback(self):

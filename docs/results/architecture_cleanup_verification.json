@@ -1,0 +1,87 @@
+{
+  "status": "passed",
+  "baseline_git_commit": "7d66a5fbaa1be6eca0c700cd97e31480b920da3a",
+  "report_reference": "report_unified_v3_20261015_r2",
+  "cleanup_run": "report_cleanup_v3_20261015",
+  "migrated_pool": {
+    "risk_rows": 7055,
+    "benchmark_rows": 5934,
+    "benchmark_exactly_unchanged": true,
+    "identity": {
+      "version": "preprocessing_v2",
+      "manifest_sha256": "6b9f77dca1ecea17da2fa3e43f0ee70c9a364b20755144803b11850bd764002d",
+      "artifacts": {
+        "datasets/features.csv": "0c75525dc7ad7ca265856f4a39a88f214b0474f27bcdced7c47d7afbed9e87d5",
+        "datasets/metadata.csv": "7b6d3eda685fd9ee5fd053f18bd3fd0f82e14ed1026ed9111061e11e0c46a803",
+        "datasets/targets.csv": "1fcaea4dab55407fc3f848e9b90122c51481509319442eada084bf2f5cd75e73",
+        "reports/dataset_statistics.csv": "3cadde497f5346d6c961df35049116896aebd725afee2a07f9c94d6c1d15fecc",
+        "reports/exclusion_statistics.csv": "b70d1d89d95471d4ba966b7ee25a2fe065cf95bb8e5d4f49c7f00eee5bfd9ce3"
+      }
+    }
+  },
+  "raw_rebuild_with_cohort_reference": {
+    "risk_rows": 7055,
+    "matches_reference": true,
+    "rtol": 1e-12,
+    "atol": 1e-09,
+    "identity": {
+      "version": "preprocessing_v2",
+      "manifest_sha256": "12317ade274fe23448d7d7b6ae72460cc0971f93482989f98df07c1633a749f1",
+      "artifacts": {
+        "datasets/features.csv": "0c75525dc7ad7ca265856f4a39a88f214b0474f27bcdced7c47d7afbed9e87d5",
+        "datasets/metadata.csv": "52c0af8f40b8e29b2309be49f74c6307fedc7ef01738f5957a481569d63b593c",
+        "datasets/targets.csv": "3074168fec2d8c5e76edd5972e25ee9c26b46332d6afc64aa4e90dc8c2c39eb3",
+        "reports/dataset_statistics.csv": "3cadde497f5346d6c961df35049116896aebd725afee2a07f9c94d6c1d15fecc",
+        "reports/exclusion_statistics.csv": "ebca544d08b3612a9e22dcb6e057308399774732c4d6d8799b56e4b3600faedf"
+      }
+    }
+  },
+  "regression": {
+    "models": 99,
+    "report_summary_groups": 954,
+    "maximum_absolute_difference": 1.4551915228366852e-11,
+    "coverage": {
+      "labels_unavailable": 0,
+      "query_orders": 4640,
+      "scored_orders": 4640
+    },
+    "elapsed_seconds": 104.14647737499945,
+    "max_rss_bytes": 896729088
+  },
+  "independent_verification": {
+    "announcement_support_cells_checked": 324,
+    "daily_aggregate_rows_checked": 1188,
+    "independently_replayed_models": 89,
+    "independently_replayed_summary_rows": 4717,
+    "model_fit_calls": 0,
+    "models_daily_checked": 99,
+    "official_validation_open_attempts": 0,
+    "quadratic_rmse_models_checked": 86,
+    "risk_rows_checked": 2056,
+    "scope": "hashes, causal cohorts, H0 parameter identity, all daily moments, fixed and announcement replay; uncertainty uses existing tested statistics implementation",
+    "status": "passed",
+    "weekly_cohorts": 12
+  },
+  "tests": {
+    "passed": 86,
+    "command": "python -m unittest discover -s tests"
+  },
+  "raw_rebuild_guard": {
+    "note": "Post-regression guard addition affects only raw rebuild with cohort reference, not loading or prediction. Reordered raw rows and changed labels rejected; append-only unchanged retained rows allowed.",
+    "code_sha256": "1282cc5f39262d3b4f668e95b627107c053ea27668bbb1ac571254ed03a9d948",
+    "test_sha256": "f6a5d98c288b3003da57270ee9b851db96426d4075dfc2e8449986a39b85afb5"
+  },
+  "source_run_manifest_sha256": "cf68104624a91cdd127516701164fd5234aebab0ea4724326d337c39aca50ecc",
+  "source_verification_sha256": "669073a38c6ec297c6d29b6a2efa96df18fa7dbb9098ae8844819adcca24c962",
+  "official_validation_open_attempts": 0,
+  "docs": {
+    "word_pages_visually_checked": 6,
+    "local_links_checked": 60,
+    "broken_links": 0
+  },
+  "review": "No critical or important findings; incorrect diagnostic filename in results README corrected",
+  "limitations": [
+    "Migrated report pool preserves historical cohort exclusions",
+    "May–July remain seen development validation; no new selection or independent generalization claim"
+  ]
+}

@@ -1,25 +1,49 @@
 {
   "version": "h0_hourly_amount_v1",
   "protocol": "config/validation_protocol_v3.json",
-  "models": ["official_raw", "h0", "amount_level", "amount_joint", "amount_gate"],
+  "models": [
+    "official_raw",
+    "h0",
+    "amount_level",
+    "amount_joint",
+    "amount_gate"
+  ],
   "primary": "amount_joint",
   "probability": "unchanged_unweighted_h0",
   "time_decay": false,
   "contract_residual": false,
-  "windows_minutes": [60, 240],
+  "windows_minutes": [
+    60,
+    240
+  ],
   "ridge_strength": 100,
-  "continuous_bounds": [0.9, 1.1],
-  "gate_bounds": [1.0, 1.1],
+  "continuous_bounds": [
+    0.9,
+    1.1
+  ],
+  "gate_bounds": [
+    1.0,
+    1.1
+  ],
   "minimum_positive_orders": 40,
   "minimum_positive_days": 5,
-  "gate_level_quantiles": [0.75, 0.95],
-  "gate_speed_ratios": [1.25, 2.0],
+  "gate_level_quantiles": [
+    0.75,
+    0.95
+  ],
+  "gate_speed_ratios": [
+    1.25,
+    2.0
+  ],
   "gate_minimum_positive_orders": 15,
   "gate_minimum_positive_days": 3,
   "standardized_clip": 3,
   "parameter_search": false,
   "market_prefix_sha256": "cbf5d491d167ac377beb844dc9794e4f5e9986f72859035426f7789e67924b50",
-  "reference_run": "outputs/model_studies/h0_time_decay_20261015",
-  "bootstrap_blocks": [3, 7, 14],
+  "bootstrap_blocks": [
+    3,
+    7,
+    14
+  ],
   "bootstrap_repeats": 2000
 }

@@ -1,0 +1,9 @@
+{
+  "version": "preprocessing_v2",
+  "timezone": "UTC",
+  "research_start": "2026-02-01T00:00:00Z",
+  "research_end_source": "validation_protocol_v3.json:validation_end",
+  "label_availability": "closedAt strictly before research end",
+  "market_windows_minutes": [60, 240, 1440],
+  "max_candle_age_seconds": 60
+}

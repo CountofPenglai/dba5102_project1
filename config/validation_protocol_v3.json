@@ -4,13 +4,17 @@
   "training_start": "2026-04-01T00:00:00Z",
   "validation_start": "2026-05-01T00:00:00Z",
   "validation_end": "2026-07-31T17:11:48Z",
-  "report_months": ["2026-05", "2026-06", "2026-07"],
+  "report_months": [
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
   "history_days": 30,
   "update_days": 7,
   "label_rule": "created in [max(training_start,D-30d),D), closed strictly before D",
   "weekly_label_feedback": true,
   "tail_history": "monthly q90 from April onward, created and closed strictly before month start",
-  "old_july_status": "rolling_validation; canonical test storage retained without repartitioning",
   "official_validation": "forbidden",
-  "selection": "fixed exploratory candidates, no parameter search or automatic adoption"
+  "selection": "fixed exploratory candidates, no parameter search or automatic adoption",
+  "july_status": "seen rolling validation; no separate test split"
 }

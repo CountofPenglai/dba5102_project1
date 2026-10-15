@@ -1,50 +1,46 @@
-# PP定价研究：H0与官方Base的有限混合
+# PP定价研究 H0与官方Base的有限混合
 
-更新：2026-10-15。主分支收录 **H0/Base混合、4月训练与5–7月滚动验证、官方宏观公告日历与分析**；额外保留H0时间衰减、小时金额响应两项探索。目标为估计BTC保险订单的每BTC预期赔付。原始订单与行情不随仓库发布。
+更新：2026-10-15。研究目标是估计BTC保险订单的每BTC预期赔付。当前项目只维护报告需要的模型、统一数据处理、验证与公告日历；原始订单和行情不随仓库发布。
 
-**当前结论：** Call `40% H0 + 60% Base`、Put `15% H0 + 85% Base` 是细网格中的月等权误差最优点，邻近比例近乎持平；全期逐单RMSE和完整风险约束仍未超过Base，不是已经部署的最终模型。
+**当前结论：** Call采用40% H0、Put采用15% H0的混合，在已见验证集的月等权误差上略优于Base，但全期逐单RMSE和完整风险约束仍未超过Base。它是开发候选，尚不是已验证的部署方案。
 
 | 同一5–7月队列 | 月等权RMSE | 月等权MAE | 全期逐单RMSE |
 |---|---:|---:|---:|
 | Base | 293.564338 | 184.439853 | **295.150078** |
 | H0 | 298.010152 | 186.263090 | 303.531640 |
-| 粗网格最优Call50%/Put25% | 293.114750 | 183.652670 | 296.046896 |
-| 细网格最优Call40%/Put15% | **293.048025** | **183.558057** | 295.614043 |
+| Call50% / Put25% H0 | 293.114750 | 183.652670 | 296.046896 |
+| Call40% / Put15% H0 | **293.048025** | **183.558057** | 295.614043 |
 
-误差单位USDC/BTC。月等权RMSE先对三个单月MSE等权平均再开方，全期逐单则按订单数加权，两种口径必须并列。最优相对Base的改善区间仍跨0，Call净金额偏差扩大10.81%。见[统一重跑报告](docs/reports/2026-10-15-report-unified-rerun.md)和[版本化关键统计](docs/results/README.md)。
+单位USDC/BTC。月等权RMSE是三个单月MSE等权平均后开方；逐单RMSE按订单数加权。候选改善的95%区间仍跨0，Call净金额偏差扩大10.81%。完整解释见[统一研究结果](docs/reports/2026-10-15-report-unified-rerun.md)。
 
-本轮已将报告内99个既有配置按统一协议重新计算；公告三档修正均因事件支持不足回退Base。原实验保留追溯，当前表格和Word统一采用`report_unified_v3_20261015_r2`结果。
+## 项目结构
 
-面向商业汇报的[研究报告大纲 Word](docs/deliverables/研究报告大纲_H0与Base混合模型.docx)已按当前主线更新，涵盖H0/Base混合的形成过程、关键探索、共同队列结果和适用局限；来源版本及交接说明见[文档索引](docs/research_document_index.md)。
+```text
+pp_audit/       原始订单、行情与关键质量统计
+pp_data/        特征、标签、元数据统一池及校验加载
+pp_models/      H0、报告对照配方、统一评估与运行归档
+pp_calendar/    宏观日历的时区、历史可知性与版本维护
+config/         一份验证协议、数据规则和保留模型设置
+scripts/        数据迁移、日历维护、独立结果核验
+external_data/  官方公告日历、冻结快照与公开来源
+tests/          合成数据测试
+docs/           汇报Word、数据/模型说明和当前关键结果
+outputs/        本地生成的数据与完整运行，不提交Git
+```
 
-## 模型与合并范围
+数据、模型、统计和归档职责已分离。H0、评分、尾部上下文、重采样等公共函数不再藏在旧GAM、静态分布或合同残差实验中。报告仍包含99个既有配置；没有新增选参范围。模型与保留理由见[模型说明](docs/model_design.md)。
 
-H0为两阶段模型：分Call/Put估计正赔付概率，再用正赔付订单拟合相对Base的金额系数，输出`概率 × Base × 金额系数`。概率输入为Base、剩余期限及按波动标准化的方向价格位置；实现为`pp_models/calibration_models.py`中的`hurdle_base`。最终赔付仅作已结算训练目标和事后评价，不作定价输入。
+## 唯一训练验证口径
 
-| 内容 | 价值与状态 | 依据 |
-|---|---|---|
-| 固定/动态混合与状态回退 | 固定混合减轻跨期退化；动态权重未胜出；不按月份拼赢家 | [粗网格](docs/reports/2026-10-15-h0-blend-ratios.md)、[回退](docs/reports/2026-10-15-h0-state-fallback.md)、[细网格](docs/reports/2026-10-15-h0-blend-fine.md) |
-| 验证协议v3 | 4月训练、5–7月滚动验证，30日已结算历史、每7日更新 | [说明](docs/validation_protocol_v3.md)、[配置](config/validation_protocol_v3.json) |
-| 官方宏观公告 | CPI、非农、FOMC日历、历史预告证据、跨公告/阶段分析及公告倍率研究记录 | [数据集](external_data/macro_events/README.md)、[阶段报告](docs/reports/2026-10-14-macro-phases.md)、[倍率结果](docs/reports/2026-10-14-macro-multiplier.md) |
-| **额外1：H0时间衰减** | 检验近期加权能否减少滞后；无稳定整体增量，保留分方向更新速度诊断 | [报告](docs/reports/2026-10-15-h0-time-decay.md) |
-| **额外2：小时金额响应** | 检验波动水平、变化速度和保守门控；局部尾部收益伴随普通订单代价 | [报告](docs/reports/2026-10-15-h0-hourly-amount.md) |
+[验证协议v3](config/validation_protocol_v3.json)是日期角色的唯一来源：4月训练，5–7月滚动验证，从5月1日起连续每7日更新，使用此前30日创建且更新前已结算的历史订单。右端为2026-07-31 17:11:48 UTC，不含该时点。同队列4,640单，5/6/7月分别726/1,373/2,541单。
 
-选中入口所需的共享加载、评估、统计及历史模型代码同时纳入。部分共享函数仍在旧研究模块中，这些模块作为依赖保留，不代表额外采用其研究方案。范围及来源哈希见[集成清单](docs/integration/h0_main_selection.json)，其他探索保留在研究分支。
+预处理现在输出一套平面数据，不再创建train、validation、test子目录。迁移保留原报告样本，不补回历史排除的跨月结算订单；这一样本局限仍需披露。7月属于已见验证，当前没有独立内部测试集。新官方验证文件禁止读取。详见[数据流程](docs/data_pipeline.md)和[验证口径](docs/validation_protocol_v3.md)。
 
-## 当前验证与数据边界
+H0输出“正赔付概率 × Base × 正赔付金额系数”，Call与Put分别拟合。定价输入只能来自合同与已完成行情；最终赔付和实际终止时间只用于合法历史训练筛选及事后评价。当前周更依赖已结算标签反馈，尚未证明适用于官方无标签部署。
 
-- 训练起点 **2026-04-01 UTC**；验证为 **2026-05-01至2026-07-31 17:11:48 UTC**，右端不含。同队列4,640单，5/6/7月分别726/1,373/2,541单。
-- 从5月1日起连续每7日更新，每次只用此前30日创建、更新之前已结算的订单；周内冻结。7月1–2日沿用6月26日参数。
-- 验证标签结算后可用于之后的合法更新，不能影响已有预测。当前依赖标签反馈，官方无标签部署兼容性尚未验证。
-- [预处理v1](config/preprocessing_v1.json)中的train/validation/test仍为不可变存储分区；v3从其并集中按时间限定角色。**旧test目录的7月现在是已见验证数据**，不重新分区、不补回原来排除的跨边界订单。
-- 新官方验证文件`pp_transactions_validation.csv`禁止读取。未启动全量训练或未知官方测试。
-- RMSE优先，MAE监控代价；方向/期限、普通/尾部、现金低估另查。尾部阈值只用月初可用历史，真实尾部身份仅供评价。
+## 环境与统一入口
 
-详见[协议v3](docs/validation_protocol_v3.md)。5–7月已经反复用于开发，选参结果不是独立盲测。
-
-## 环境和运行
-
-Python 3.10+；已记录实验环境为Python 3.12。测试使用合成样本，不需要提供方订单。
+Python 3.10+；结果环境为Python 3.12。测试用合成数据，不需要私有订单。
 
 ```sh
 python -m venv .venv
@@ -52,53 +48,38 @@ python -m venv .venv
 .venv/bin/python -m unittest discover -s tests
 .venv/bin/python -m pp_audit --help
 .venv/bin/python -m pp_data --help
-.venv/bin/python -m pp_models.h0_blend_fine_study --help
+.venv/bin/python -m pp_models --help
 ```
 
-审计和预处理使用`--data-dir`指定已获授权的原始资料；默认是仓库旁`docs/Jasper Vault Options Pricing Optimisation(Included Base Premium)/`。H0研究读取本仓库`outputs/preprocessing/`的经过哈希验证的canonical产物。完整生成数据、虚拟环境和运行档案由`.gitignore`排除。
-
-当前报告可用一个入口重新执行（必须提供已授权canonical目录与市场文件，并使用未占用的run-id）：
+首次从旧报告数据迁移，使用显式路径并写入新目录：
 
 ```sh
-.venv/bin/python -m pp_models.report_unified_study --run-id report_unified_v3_local --data-dir /absolute/path/to/outputs/preprocessing --market-path /absolute/path/to/btc_market_history.csv
-.venv/bin/python scripts/verify_report_unified.py outputs/model_studies/report_unified_v3_local
+.venv/bin/python scripts/migrate_report_data.py --source-dir /absolute/path/to/old/preprocessing --output-dir outputs/preprocessing
 ```
 
-该入口使用上述v3协议，重新拟合全部既有配方，统一评分和尾部定义；输入位置显式传入，不依赖旧H0运行的完整归档。新官方验证仍禁止读取。实际输入、配置、源码、参数和哈希记录在忽略版本控制的运行目录中；版本化结果仅保留关键聚合。更多说明见[统一重跑报告](docs/reports/2026-10-15-report-unified-rerun.md)。
+迁移工具校验旧文件哈希，保留所有行与数值；它是读取旧容器的唯一兼容入口。模型加载器仅接受新格式。若从原始资料重建，使用[数据流程](docs/data_pipeline.md)中的队列参照选项，否则可能扩大样本，不能直接替代当前报告。
 
-以下为**历史单项入口**，保留原前置依赖；不应把它们的不同协议成绩混入当前报告。
-
-以下顺序用于**明确重新开展实验**，安装/合并时不会自动运行。前置是通过`pp_data`生成兼容的canonical数据；输出目录必须不存在，不覆盖历史运行，各阶段校验前置参考和来源哈希。
-
-状态回退与小时金额响应还必须保留原始`btc_market_history.csv`，位置固定为`<仓库父目录>/docs/Jasper Vault Options Pricing Optimisation(Included Base Premium)/btc_market_history.csv`，即`pp_data.config.DEFAULT_DATA`下的市场文件。预处理的自定义`--data-dir`不会传递给这些研究入口。它们只读取历史截止前的市场前缀，并要求前缀SHA256为`cbf5d491d167ac377beb844dc9794e4f5e9986f72859035426f7789e67924b50`；这是前缀哈希，不是整个可继续追加行情的文件哈希。独立工作树的仓库父目录可能不同，运行前须按该位置准备已授权市场文件，不能仅复制canonical目录。
+运行全部报告配方并独立核验：
 
 ```sh
-.venv/bin/python -m pp_models.h0_time_decay_study --run-id h0_time_decay_20261015
-.venv/bin/python -m pp_models.h0_state_fallback_study --run-id h0_state_fallback_20261015
-.venv/bin/python -m pp_models.h0_blend_ratios_study --run-id h0_blend_ratios_20261015
-.venv/bin/python -m pp_models.h0_blend_fine_study --run-id h0_blend_fine_20261015
-.venv/bin/python scripts/verify_h0_blend_fine.py outputs/model_studies/h0_blend_fine_20261015
-
-# 小时金额响应的前置运行仅为时间衰减；同时需要上述默认位置的市场文件。
-.venv/bin/python -m pp_models.h0_hourly_amount_study --run-id h0_hourly_amount_20261015
+.venv/bin/python -m pp_models --run-id report_local --data-dir outputs/preprocessing --market-path /absolute/path/to/btc_market_history.csv
+.venv/bin/python scripts/verify_report_unified.py outputs/model_studies/report_local
 ```
 
-`scripts/verify_h0_*.py`独立重放保存参数，不新增训练。核验原历史完整档案需对应源码快照、canonical和前置运行；`docs/results/`只有精选统计，不能替代完整运行目录。宏观历史分析/倍率还需要旧参考档案，见[交接索引](docs/research_document_index.md)。
+run-id必须未被占用。入口重新拟合全部既有配方、统一评分并核对当前报告统计；只读取截至验证终点的旧行情前缀。输入、源码、配置、参数和环境留在本地完整运行，Git只保留[当前关键统计](docs/results/README.md)。旧单项训练入口、旧模型框架和旧分割配置已移除。
 
-旧`python -m pp_models study-plan/study-run`保留早期六月GAM/EBM/浅层树流程，**不会自动采用v3**，不是当前H0默认入口。旧说明见[模型文档](docs/model_training.md)。
+## 官方公告维护
 
-## 公告数据维护
-
-`external_data/macro_events/`最后核对时间为2026-10-14。82条日程含65个主要事件；CPI/非农覆盖2026–2027，FOMC延至2028年1月。使用纽约时区转UTC，保留`known_by_utc`、历史预告和改期来源；未知或尚未公开不能当作“无公告”。
+[公告日历](external_data/macro_events/README.md)独立于订单维护，最后核对时间为2026-10-14。82条日程含65个主要事件，CPI/非农覆盖2026–2027，FOMC延至2028年1月。历史可知性、改期证据和时区规则均保留。
 
 ```sh
 .venv/bin/python scripts/update_macro_calendar.py --source external_data/macro_events/sources/2026-10-14/verified_schedule_history.json --check-only
 ```
 
-新日程另建来源包，先检查后发布新快照，不覆盖历史版本。脚本不自动抓取或定时更新；未来训练/测试前仍需核对官方日期。详见[字段与维护流程](external_data/macro_events/README.md)。
+后续更新另建来源包与快照，不能覆盖旧版本；没有自动抓取或定时任务。当前报告三档公告倍率均因独立事件支持不足回退1，不代表公告没有价值。
 
-## 项目组织与交接
+## 汇报与交接
 
-`pp_audit/`负责审计，`pp_data/`负责固定存储与加载，`pp_models/`负责模型及统计，`pp_calendar/`负责公告时间和版本；`scripts/`存独立分析、维护与核验入口。`config/`存固定配置，`docs/reports/`存选中报告，`docs/results/`存关键统计，`docs/integration/`存合并来源，`outputs/`存不提交的本地完整产物。
+[商业汇报大纲 Word](docs/deliverables/研究报告大纲_H0与Base混合模型.docx) · [交接索引](docs/research_document_index.md) · [模型说明](docs/model_design.md) · [清理记录](docs/plans/2026-10-15-report-architecture-cleanup.md)。
 
-[研究交接索引](docs/research_document_index.md) · [研究决策](docs/research_decisions.md) · [集成计划](docs/plans/2026-10-15-main-integration.md)。尚未建立需求模型，不将赔付预测改善等同于真实利润提升。
+当前统计来源是`report_unified_v3_20261015_r2`。清理前版本保留在Git提交`7d66a5f`，无关旧实验不再复制到当前目录。原始资料和其他研究分支不受本次清理影响。尚未建立需求模型，赔付预测改善不能直接等同于利润提升。

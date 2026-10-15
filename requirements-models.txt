@@ -1,4 +1,4 @@
 -r requirements.txt
-pygam==0.12.0
-interpret-core==0.7.8
 scikit-learn==1.7.2
+scipy>=1.13,<2
+threadpoolctl>=3.5,<4

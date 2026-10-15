@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import pandas as pd
 from pp_data.features import BASE_FEATURE
-from pp_data.io import ModelSplit
+from pp_data.io import ModelData
 from pp_models.h0_state_fallback import market_states, match_states, StateGate, history_weight
 from pp_models.h0_state_fallback_study import predict_period
 from pp_models.h0_time_decay_study import PROTOCOL, predict_period as reference_predict
@@ -17,7 +17,7 @@ def fixture():
     meta = pd.DataFrame({'created_at_utc': dates, 'closed_at_utc': dates+pd.Timedelta(minutes=30)}, index=ids)
     states = pd.DataFrame({'logv60': np.sin(k/37), 'logv1440': np.cos(k/89),
         'imbalance': .1*np.sin(k/17), 'trend': .2*np.cos(k/29)}, index=dates)
-    return ModelSplit(x, y, meta), states
+    return ModelData(x, y, meta), states
 
 
 class StateTests(unittest.TestCase):

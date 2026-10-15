@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from pp_data.features import BASE_FEATURE
-from .calibration_models import CalibrationModel, hurdle_design
+from .h0 import H0, hurdle_design
 
 
 def time_weights(created, origin, half_life_days):
@@ -26,9 +26,9 @@ def effective_size(weights):
     return float(weights.sum()**2/(weights@weights)) if len(weights) and (weights@weights) > 0 else 0.
 
 
-class TimeDecayH0(CalibrationModel):
+class TimeDecayH0(H0):
     def __init__(self, half_life_days):
-        super().__init__('hurdle_base')
+        super().__init__()
         self.half_life_days = half_life_days
 
     def fit(self, X, y, created, origin):

@@ -16,16 +16,15 @@ import pandas as pd
 PROJECT = Path(__file__).resolve().parents[1]
 if str(PROJECT) not in sys.path: sys.path.insert(0, str(PROJECT))
 from pp_data.features import BASE_FEATURE
-from pp_models.base_multiplier_study import AccessGuard
-from pp_models.data import load_pool
-from pp_models.frozen_candidate_study import canonical_identity
+from pp_models.runtime import AccessGuard
+from pp_data.io import load_dataset
+from pp_data.io import canonical_identity
 from pp_models.macro_multiplier_features import BASIS
-from pp_models.macro_multiplier_study import pool_features
-from pp_models.scoped_data import development_snapshot
-from pp_models.study_storage import atomic_json, file_digest
-from scripts.verify_frozen_candidates import metrics
-from scripts.verify_h0_hourly_amount import h0_values
-from scripts.verify_h0_blend_fine import quadratic_check
+from pp_models.macro_multiplier_features import pool_features
+from pp_models.runtime import atomic_json, file_digest
+from pp_models.verification import metrics
+from pp_models.verification import h0_values
+from pp_models.verification import quadratic_check
 
 
 def check_daily(summary, daily, macro):
@@ -56,16 +55,16 @@ def verify(root):
     read = lambda name: json.loads((root/'provenance'/name).read_text())
     manifest, pre, protocol, states = (read(name) for name in
         ['manifest.json', 'preflight.json', 'protocol.json', 'parameters.json'])
+    assert manifest['producer'] == 'report_unified_v2', 'Use the archived commit to verify an earlier storage format'
     assert manifest['status'] == 'complete' and manifest['official_validation_open_attempts'] == 0
     for name, digest in manifest['artifacts'].items(): assert file_digest(root/name) == digest, name
     with ZipFile(root/'provenance/source.zip') as archive:
         for name, digest in pre['sources'].items():
             assert hashlib.sha256(archive.read(name)).hexdigest() == digest, name
-    guard = AccessGuard(); guard.allow_pressure = True; sys.addaudithook(guard.check)
+    guard = AccessGuard(); sys.addaudithook(guard.check)
     data_dir = Path(pre['data_dir'])
-    assert canonical_identity(data_dir, include_test=True) == pre['canonical']
-    assert development_snapshot(data_dir)[0] == pre['development']
-    pool = load_pool('test', {'cohort': 'benchmark', 'use_base': True}, data_dir)
+    assert canonical_identity(data_dir) == pre['canonical']
+    pool = load_dataset(data_dir, cohort='benchmark', use_base=True)
     created, closed = pool.metadata.created_at_utc, pool.metadata.closed_at_utc
     start, end, first = (pd.Timestamp(protocol[k]) for k in ['validation_start', 'validation_end', 'training_start'])
     folder = root/'metrics/validation'
@@ -173,7 +172,7 @@ def verify(root):
         replay_rows += 1
     pooled = summary.loc[summary.month.eq('all') & summary.group.eq('overall')].set_index('model')
     quadratic = quadratic_check(root, fixed, macro.set_index('model'), pooled)
-    refs = pd.read_csv(folder/'reference_checks.csv'); assert refs.reproduced.all() and len(refs) == 5
+    refs = pd.read_csv(folder/'reference_checks.csv'); assert refs.reproduced.all() and len(refs) == 1 and refs.models.eq(99).all()
     out = dict(status='passed', weekly_cohorts=len(origins), models_daily_checked=len(macro),
         daily_aggregate_rows_checked=count, independently_replayed_models=len(replay_names),
         independently_replayed_summary_rows=replay_rows, quadratic_rmse_models_checked=quadratic,

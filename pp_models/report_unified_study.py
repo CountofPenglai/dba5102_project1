@@ -19,18 +19,17 @@ from . import h0_state_fallback_study as state
 from . import h0_hourly_amount_study as hourly
 from . import h0_blend_ratios_study as coarse
 from . import h0_blend_fine_study as fine
-from .base_multiplier_study import AccessGuard
-from .data import load_pool
+from .runtime import AccessGuard
+from pp_data.io import load_dataset
 from .fixed_blend_statistics import tables
-from .frozen_candidate_study import canonical_identity, write_tables
+from .runtime import canonical_identity, write_tables
 from .h0_hourly_amount import market_features
 from .h0_state_fallback import market_states
 from .macro_multiplier import MacroMultiplier
-from .macro_multiplier_study import pool_features
-from .put_final_io import read_test_market_prefix
-from .runs import run_destination, snapshot
-from .scoped_data import development_snapshot
-from .study_storage import atomic_json, file_digest
+from .macro_multiplier_features import pool_features
+from .runtime import read_market_prefix
+from .runtime import run_destination, environment_snapshot
+from .runtime import atomic_json, file_digest
 
 PROTOCOL = decay.PROTOCOL
 COMMON = ['day', 'month', 'side', 'tenor', 'quantity', 'tail_threshold', 'tail_source', 'origin']
@@ -43,7 +42,7 @@ CATALOG = {**FIXED, **{m: (np.nan, np.nan) for m in EXTRAS}}
 PAIRS = [('h0', 'official_raw')] + [(c, r) for c in CATALOG if c not in ('official_raw', 'h0')
                                   for r in ('official_raw', 'h0')]
 PAIRS += [(c, fine.PREVIOUS_BEST) for c in fine.FINE if c != fine.PREVIOUS_BEST]
-SETTINGS = dict(version='report_unified_v1', protocol='config/validation_protocol_v3.json',
+SETTINGS = dict(version='report_unified_v2', protocol='config/validation_protocol_v3.json',
     models=list(CATALOG), announcement_strengths=STRENGTHS,
     announcement_history='same_30_day_created_and_settled_pool_as_H0',
     announcement_support='unchanged_shared_5_events_30_orders_2_months_direction_8_60_3',
@@ -160,22 +159,21 @@ def predict_all(pool, market, calendar, protocol=None):
     return merged, states, diagnostics
 
 
-def compare_existing(summary):
-    """Only compare equal-protocol scores numerically; legacy announcement results are superseded."""
+def compare_reference(summary, comparison):
+    """Verify the report's frozen evidence, without loading any archived model."""
+    root = PROJECT/'docs/results/report_unified_v3_20261015_r2/validation'
     keys = ['month', 'model', 'group', 'value']
     columns = ['orders', 'rmse_per_btc', 'mae_per_btc', 'total_bias_usdc', 'gross_underprediction_usdc']
-    current = summary.set_index(keys)
-    checks = []
-    for family in ('h0_time_decay', 'h0_state_fallback', 'h0_hourly_amount', 'h0_blend_ratios', 'h0_blend_fine'):
-        path = PROJECT/f'docs/results/{family}_20261015/validation/summary.csv'
-        old = pd.read_csv(path, dtype={'value': str}).set_index(keys)
-        new = current.reindex(old.index)
-        if new[columns].isna().any().any(): raise ValueError('Missing historical comparison group')
-        np.testing.assert_allclose(new[columns].to_numpy(float), old[columns].to_numpy(float), rtol=1e-10, atol=1e-7)
-        checks.append(dict(previous_run=family+'_20261015', groups=len(old), protocol='v3',
-            maximum_absolute_difference=float(np.abs(new[columns].to_numpy(float)-old[columns].to_numpy(float)).max()),
-            reproduced=True))
-    return pd.DataFrame(checks)
+    old = pd.read_csv(root/'summary.csv', dtype={'value': str}).set_index(keys)
+    current = summary.set_index(keys).reindex(old.index)
+    np.testing.assert_allclose(current[columns].to_numpy(float), old[columns].to_numpy(float), rtol=1e-10, atol=1e-7)
+    grid = pd.read_csv(root/'model_comparison.csv').set_index('model')
+    cols = ['macro_rmse_per_btc', 'macro_mae_per_btc', 'pooled_rmse_per_btc', 'pooled_mae_per_btc']
+    new = comparison.set_index('model').loc[grid.index, cols]
+    np.testing.assert_allclose(new, grid[cols], rtol=1e-10, atol=1e-7)
+    return pd.DataFrame([dict(reference='report_unified_v3_20261015_r2', summary_groups=len(old),
+        models=len(grid), maximum_absolute_difference=float(np.abs(current[columns]-old[columns]).to_numpy().max()),
+        reproduced=True)])
 
 
 @threadpool_limits.wrap(limits=1)
@@ -186,15 +184,14 @@ def run(run_id, data_dir, market_path):
     macro_settings = json.loads((PROJECT/'config/macro_multiplier_v1.json').read_text())
     calendar_path = PROJECT/macro_settings['calendar']
     if file_digest(calendar_path) != macro_settings['calendar_sha256']: raise ValueError('Calendar evidence changed')
-    guard = AccessGuard(); guard.allow_pressure = True; sys.addaudithook(guard.check)
+    guard = AccessGuard(); sys.addaudithook(guard.check)
     root = run_destination(PROJECT/'outputs/model_studies', run_id, data_dir)
     root.mkdir(parents=True); (root/'provenance').mkdir(); began = perf_counter()
-    canonical = canonical_identity(data_dir, include_test=True)
-    environment = snapshot(data_dir)['environment']
-    dev, _ = development_snapshot(data_dir)
+    canonical = canonical_identity(data_dir)
+    environment = environment_snapshot()
     paths = {calendar_path, PROJECT/'docs/plans/2026-10-15-report-unified-rerun.md',
-             PROJECT/'tests/test_report_unified_study.py', PROJECT/'scripts/verify_report_unified.py'}
-    for folder, pattern in [('pp_models', '*.py'), ('pp_data', '*.py'), ('pp_calendar', '*.py'), ('config', '*.json')]:
+             PROJECT/'scripts/verify_report_unified.py'}
+    for folder, pattern in [('pp_models', '*.py'), ('pp_data', '*.py'), ('pp_audit', '*.py'), ('pp_calendar', '*.py'), ('config', '*.json'), ('tests', '*.py'), ('scripts', '*.py')]:
         paths.update((PROJECT/folder).glob(pattern))
     sources = {str(p.relative_to(PROJECT)): file_digest(p) for p in sorted(paths)}
     protected = {str(p.relative_to(PROJECT)): file_digest(p) for p in (PROJECT/'docs/results').rglob('*') if p.is_file()}
@@ -202,11 +199,11 @@ def run(run_id, data_dir, market_path):
         for name in sources: archive.write(PROJECT/name, name)
     atomic_json(root/'provenance/config.json', SETTINGS)
     atomic_json(root/'provenance/protocol.json', PROTOCOL)
-    atomic_json(root/'provenance/preflight.json', dict(canonical=canonical, development=dev,
+    atomic_json(root/'provenance/preflight.json', dict(canonical=canonical,
         sources=sources, previous_results=protected, data_dir=str(Path(data_dir).resolve()), market_path=str(Path(market_path).resolve())))
     try:
-        pool = load_pool('test', {'cohort': 'benchmark', 'use_base': True}, data_dir)
-        market, market_identity = read_test_market_prefix(market_path)
+        pool = load_dataset(data_dir, cohort='benchmark', use_base=True)
+        market, market_identity = read_market_prefix(market_path)
         if market_identity['prefix_sha256'] != state.SETTINGS['market_prefix_sha256']:
             raise ValueError('Historical market prefix changed')
         predicted, states, diagnostics = predict_all(pool, market, json.loads(calendar_path.read_text()))
@@ -217,12 +214,12 @@ def run(run_id, data_dir, market_path):
         result = tables(scored, PROTOCOL['validation_start'], PROTOCOL['validation_end'], CATALOG, PAIRS)
         result['model_comparison'] = result['fixed_grid'].copy()
         result['fixed_grid'] = result['fixed_grid'].loc[result['fixed_grid'].model.isin(FIXED)].copy()
-        result['reference_checks'] = compare_existing(result['summary'])
+        result['reference_checks'] = compare_reference(result['summary'], result['model_comparison'])
         result.update(diagnostics)
         write_tables(root, 'validation', result)
         atomic_json(root/'provenance/parameters.json', states)
         atomic_json(root/'provenance/market.json', market_identity)
-        if canonical_identity(data_dir, include_test=True) != canonical or development_snapshot(data_dir)[0] != dev:
+        if canonical_identity(data_dir) != canonical:
             raise ValueError('Canonical data changed')
         for name, digest in {**sources, **protected}.items():
             if file_digest(PROJECT/name) != digest: raise ValueError('Source/reference changed: '+name)
@@ -232,7 +229,7 @@ def run(run_id, data_dir, market_path):
                     hourly_amount=len(states['hourly'])*3, announcement=len(states['announcement']))
         manifest = dict(status='complete', producer=SETTINGS['version'], coverage=coverage, recipes=len(CATALOG),
             fits=fits, reference_results_reproduced=True, official_validation_open_attempts=guard.official_attempts,
-            premature_test_attempts=guard.premature_test_attempts, old_july_role='seen_rolling_validation',
+            july_role='seen_rolling_validation',
             elapsed_seconds=perf_counter()-began, max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
             environment=environment, artifacts={str(p.relative_to(root)): file_digest(p) for p in root.rglob('*') if p.is_file()})
         atomic_json(root/'provenance/manifest.json', manifest)
@@ -242,10 +239,14 @@ def run(run_id, data_dir, market_path):
     return root
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-id', required=True)
     parser.add_argument('--data-dir', type=Path, required=True, help='Verified canonical preprocessing directory')
     parser.add_argument('--market-path', type=Path, required=True, help='Market CSV; only the old-data prefix is read')
     args = parser.parse_args()
     print(run(args.run_id, args.data_dir, args.market_path))
+
+
+if __name__ == "__main__":
+    main()

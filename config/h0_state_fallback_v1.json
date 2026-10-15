@@ -34,7 +34,6 @@
   "contract_residual": false,
   "hourly_amount": false,
   "parameter_search": false,
-  "reference_run": "outputs/model_studies/h0_time_decay_20261015",
   "market_prefix_sha256": "cbf5d491d167ac377beb844dc9794e4f5e9986f72859035426f7789e67924b50",
   "bootstrap_blocks": [
     3,

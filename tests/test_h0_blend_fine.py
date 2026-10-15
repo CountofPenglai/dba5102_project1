@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 from pp_data.features import BASE_FEATURE
-from pp_data.io import ModelSplit
+from pp_data.io import ModelData
 from pp_models.h0_time_decay_study import PROTOCOL
 from pp_models.h0_blend_ratios_study import predict_period as coarse_predict
 from pp_models.h0_blend_fine_study import predict_period
@@ -16,7 +16,7 @@ def fixture():
         'quantity_btc': .5, 'option_type': k%2, 'realized_vol_60m': .01, 'log_moneyness': (k%9-4)*.001}, index=ids)
     y = pd.Series(np.where(k%3 == 0, 300., 0.), index=ids)
     meta = pd.DataFrame({'created_at_utc': dates, 'closed_at_utc': dates+pd.Timedelta(minutes=30)}, index=ids)
-    pool = ModelSplit(x, y, meta); protocol = {**PROTOCOL, 'validation_end': '2026-07-05T00:00:00Z'}
+    pool = ModelData(x, y, meta); protocol = {**PROTOCOL, 'validation_end': '2026-07-05T00:00:00Z'}
     coarse, states = coarse_predict(pool, protocol)
     return pool, protocol, coarse, states
 

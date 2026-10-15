@@ -1,44 +1,56 @@
-"""Shared quality masks, label availability, and one chronological assignment."""
+"""Shared quality masks and a chronological pool with final settled labels."""
 
 from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 from pp_audit.orders import audit_orders
 from pp_audit.market import audit_market
-from .config import load_config
+from .config import load_config, load_protocol
 from .features import build_features, MARKET_FEATURES, RISK_FEATURES
 
 
 @dataclass
-class SplitTables:
+class PreparedData:
     features: pd.DataFrame
     targets: pd.DataFrame
     metadata: pd.DataFrame
-
-
-@dataclass
-class PreparedData:
-    splits: dict[str, SplitTables]
     statistics: pd.DataFrame
     exclusions: pd.DataFrame
     config: dict
 
 
+def pool_statistics(metadata):
+    """Summarize the pool without assigning any model evaluation roles."""
+    dates = metadata.copy()
+    for name in ("created_at_utc", "closed_at_utc"):
+        dates[name] = pd.to_datetime(dates[name], utc=True)
+    rows = []
+    for cohort in ("risk", "benchmark"):
+        selected = dates if cohort == "risk" else dates.loc[dates.benchmark_eligible]
+        rows.append({
+            "cohort": cohort, "rows": len(selected),
+            "first_created_utc": selected.created_at_utc.min(),
+            "last_created_utc": selected.created_at_utc.max(),
+            "last_label_available_utc": selected.closed_at_utc.max(),
+            "base_missing_rows": int(selected.base_missing.sum()),
+        })
+    return pd.DataFrame(rows)
+
+
 def prepare(orders_raw: pd.DataFrame, market_raw: pd.DataFrame) -> PreparedData:
     config = load_config()
+    start = pd.Timestamp(config["research_start"])
+    end = pd.Timestamp(load_protocol()["validation_end"])
     audited = audit_orders(orders_raw)
     market = audit_market(market_raw)
     d, cohorts = audited.rows, audited.cohorts
     x, last_close = build_features(d, market.usable)
     ids = pd.Series([f"training_{i + 1:06d}" for i in range(len(d))], index=d.index)
-    assignments = pd.Series("", index=d.index)
     reason = pd.Series("invalid_order", index=d.index)
-    reason.loc[cohorts.technical] = "outside_split_window"
-    for split, bounds in config["splits"].items():
-        belongs = cohorts.technical & d.createdAt.ge(pd.Timestamp(bounds["start"])) & d.createdAt.lt(pd.Timestamp(bounds["end"]))
-        assignments.loc[belongs] = split
-        reason.loc[belongs] = "label_not_known_before_split_end"
-        reason.loc[belongs & d.closedAt.lt(pd.Timestamp(bounds["end"]))] = "retained"
+    reason.loc[cohorts.technical] = "outside_research_window"
+    belongs = cohorts.technical & d.createdAt.ge(start) & d.createdAt.lt(end)
+    reason.loc[belongs] = "label_not_known_before_research_end"
+    reason.loc[belongs & d.closedAt.lt(end)] = "retained"
     history_ready = last_close.notna() & x[MARKET_FEATURES].notna().all(axis=1)
     reason.loc[reason.eq("retained") & ~history_ready] = "insufficient_market_history"
     with np.errstate(over="ignore", divide="ignore", invalid="ignore"):
@@ -62,32 +74,20 @@ def prepare(orders_raw: pd.DataFrame, market_raw: pd.DataFrame) -> PreparedData:
         "recorded_price_per_btc_usdc": d.orderPrice_per_BTC_USDC,
         "recorded_markup_per_btc_usdc": d.markup_per_BTC_USDC,
     })
-    splits, stats = {}, []
-    for split, bounds in config["splits"].items():
-        mask = reason.eq("retained") & assignments.eq(split)
-        positions = metadata.loc[mask].sort_values(["created_at_utc", "source_row_number"], kind="stable").index
-        splits[split] = SplitTables(*(table.loc[positions].reset_index(drop=True) for table in (x, targets, metadata)))
-        for cohort in ("risk", "benchmark"):
-            selected = mask if cohort == "risk" else mask & cohorts.common
-            n = int(selected.sum())
-            stats.append({
-                "split": split, "cohort": cohort, "rows": n,
-                "window_start_utc": bounds["start"], "window_end_exclusive_utc": bounds["end"],
-                "first_created_utc": d.loc[selected, "createdAt"].min(),
-                "last_created_utc": d.loc[selected, "createdAt"].max(),
-                "last_label_available_utc": d.loc[selected, "closedAt"].max(),
-                "base_missing_rows": int((selected & d.apiBasePrice_per_BTC_USDC.isna()).sum()),
-            })
+    positions = metadata.loc[reason.eq("retained")].sort_values(
+        ["created_at_utc", "source_row_number"], kind="stable").index
+    features, targets, metadata = (table.loc[positions].reset_index(drop=True)
+                                    for table in (x, targets, metadata))
     definitions = {
-        "invalid_order": "未通过共享订单技术条件；含缺失标签、时间异常与多余重复记录",
-        "outside_split_window": "通过技术条件，但创建时间不在固定研究区间",
-        "label_not_known_before_split_end": "创建时间在本组内，但结算不早于本组结束；不移入其他组",
-        "insufficient_market_history": "最近有效行情过旧或缺少连续1441根已结束分钟线",
-        "invalid_derived_values": "其余条件满足，但特征或单位赔付出现非有限值",
-        "retained": "保留到唯一分割；benchmark是其中满足基础价条件的子集",
+        "invalid_order": "Failed shared order quality checks, including missing labels, time anomalies, and duplicates",
+        "outside_research_window": "Creation outside the research interval",
+        "label_not_known_before_research_end": "Settlement at or after the final research cutoff",
+        "insufficient_market_history": "No recent complete sequence of 1441 closed minute candles",
+        "invalid_derived_values": "Nonfinite features or unit payout",
+        "retained": "Retained in the chronological pool; benchmark is its common-price subset",
     }
     exclusions = pd.DataFrame([
         {"reason": key, "rows": int(reason.eq(key).sum()), "definition": value}
         for key, value in definitions.items()
     ])
-    return PreparedData(splits, pd.DataFrame(stats), exclusions, config)
+    return PreparedData(features, targets, metadata, pool_statistics(metadata), exclusions, config)

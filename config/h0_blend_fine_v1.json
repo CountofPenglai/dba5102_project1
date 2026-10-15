@@ -1177,23 +1177,10 @@
     [
       "blend_c065_p040",
       "blend_c050_p025"
-    ],
-    [
-      "h0",
-      "official_raw"
-    ],
-    [
-      "half_blend",
-      "official_raw"
-    ],
-    [
-      "blend_c000_p025",
-      "official_raw"
     ]
   ],
   "previous_best": "blend_c050_p025",
-  "reference_run": "outputs/model_studies/h0_blend_ratios_20261015",
-  "h0_mode": "replay_verified_weekly_parameters",
+  "h0_mode": "replay_current_run_weekly_parameters",
   "h0_history_days": 30,
   "update_days": 7,
   "ratio_mode": "fixed_all_validation_months",
@@ -1210,5 +1197,5 @@
     14
   ],
   "bootstrap_repeats": 2000,
-  "simultaneous_comparisons": 191
+  "simultaneous_comparisons": 188
 }

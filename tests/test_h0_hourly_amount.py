@@ -1,10 +1,11 @@
 import unittest
+from pp_models.report_unified_study import score_predictions as score
 import numpy as np
 import pandas as pd
 from pp_data.features import BASE_FEATURE
 from tests.test_h0_time_decay import fixture
 from pp_models.h0_hourly_amount import HourlyAmount, market_features, amount_features
-from pp_models.h0_hourly_amount_study import predict_period, score
+from pp_models.h0_hourly_amount_study import predict_period
 from pp_models.h0_time_decay_study import PROTOCOL, predict_period as old_predict
 
 
@@ -105,16 +106,24 @@ class HourlyProtocolTests(unittest.TestCase):
         pd.testing.assert_frame_equal(a, b); self.assertEqual(sa, sb)
 
     def test_statistics_do_not_hide_unsupported_monthly_tails(self):
-        from pp_models.h0_hourly_amount_statistics import tables
+        from pp_models.fixed_blend_statistics import tables
         p, x, f = inputs(); p.X['market_price_usdc_per_btc'] = x.market_price_usdc_per_btc
         protocol = {**PROTOCOL, 'validation_end': '2026-06-15T00:00:00Z'}
-        pred, _ = predict_period(p, f, protocol); scored, _ = score(p, pred, protocol['validation_end'])
-        out = tables(scored, protocol['validation_start'], protocol['validation_end'], uncertainty=False)
+        pred, _ = predict_period(p, f, protocol)
+        h0 = pred.loc[pred.model.eq('h0')]
+        for name in ('amount_level', 'amount_joint', 'amount_gate'):
+            candidate = pred.loc[pred.model.eq(name)]
+            np.testing.assert_array_equal(candidate.probability, h0.probability)
+            np.testing.assert_array_equal(candidate.prediction, candidate.probability*candidate.severity)
+        scored, _ = score(p, pred, protocol['validation_end'])
+        catalog = {m: (0., 0.) for m in scored.model.unique()}
+        pairs = [(m, 'official_raw') for m in catalog if m != 'official_raw']
+        out = tables(scored, protocol['validation_start'], protocol['validation_end'], catalog, pairs, uncertainty=False)
         monthly = out['monthly_risk_constraints']
         self.assertEqual(set(monthly.month), {'2026-05', '2026-06'})
         thin = monthly.tail_orders.lt(30) | monthly.tail_days.lt(5)
         self.assertTrue(thin.any()); self.assertFalse(monthly.loc[thin, 'direction_risk_pass'].any())
-        self.assertTrue(out['response_diagnostics'].groupby(['month', 'side']).orders.nunique().eq(1).all())
+        self.assertTrue(out['summary'].query("group == 'direction'").groupby(['month', 'value']).orders.nunique().eq(1).all())
 
 
 if __name__ == '__main__': unittest.main()

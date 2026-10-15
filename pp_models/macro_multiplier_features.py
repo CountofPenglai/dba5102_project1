@@ -65,3 +65,8 @@ def build_features(quotes, calendar):
     result = pd.DataFrame(rows, index=quotes.index, columns=FEATURE_COLUMNS)
     result['event_time'] = pd.to_datetime(result.event_time, utc=True)
     return result
+
+
+def pool_features(pool, calendar):
+    return build_features(pd.DataFrame({'created':pool.metadata.created_at_utc,
+        'remaining_seconds':pool.X.remaining_seconds,'option_type':pool.X.option_type}),calendar)

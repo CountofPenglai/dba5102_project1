@@ -49,11 +49,11 @@
 
 2月是明确的改期例外：[1月就业稿](https://www.bls.gov/news.release/archives/empsit_01092026.htm)预告2月6日，[1月CPI稿](https://www.bls.gov/news.release/archives/cpi_01132026.htm)预告2月11日；[2月日历](https://www.bls.gov/schedule/2026/02_sched.htm)及[官方改期表](https://www.bls.gov/bls/2025-lapse-revised-release-dates.htm)分别改为11日和13日。日历标注2月4日更新，没有日内时间，故修订日期的`known_by`取2月5日00:00纽约（05:00 UTC）。原日期保留在`superseded_schedule`，不把1月预告证据错误地挂到新日期上。查询修订前历史仍返回未知，不自动恢复当时的完整旧日程。
 
-补证详情及订单支持见[四阶段报告](../../docs/reports/2026-10-14-macro-phases.md)。1月有市场但没有有效订单；历史证据齐全不等于足够训练样本。
+当前订单支持和回退结论见[统一报告](../../docs/reports/2026-10-15-report-unified-rerun.md)。历史预告证据保留在上述来源包中。1月有市场但没有有效订单；历史证据齐全不等于足够训练样本。
 
 ## 查询与未知处理
 
-`pp_calendar.calendar`与冻结的`pp_data`分开，不改变已有预处理指纹。
+`pp_calendar.calendar`独立于订单数据池维护；模型运行固定日历快照并记录哈希。
 
 ```python
 from pathlib import Path

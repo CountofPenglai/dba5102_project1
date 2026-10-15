@@ -1,12 +1,13 @@
 import unittest
+from pp_models.report_unified_study import score_predictions as score
 import numpy as np
 import pandas as pd
 from pp_data.features import BASE_FEATURE
-from pp_data.io import ModelSplit
-from pp_models.calibration_models import CalibrationModel
-from pp_models.two_stage_study import probability_frame
+from pp_data.io import ModelData
+from pp_models.h0 import H0
+from pp_models.h0 import probability_frame
 from pp_models.h0_time_decay import TimeDecayH0, time_weights
-from pp_models.h0_time_decay_study import predict_period, score, PROTOCOL
+from pp_models.h0_time_decay_study import predict_period, PROTOCOL
 
 
 def fixture():
@@ -17,7 +18,7 @@ def fixture():
         'product_duration_seconds': 3600, 'quantity_btc': .5, 'option_type': k % 2,
         'realized_vol_60m': .01, 'log_moneyness': (k % 11 - 5)*.001}, index=ix)
     y = pd.Series(np.where(k % 3 == 0, 250. + k % 31, 0.), index=ix)
-    return ModelSplit(x, y, pd.DataFrame({'created_at_utc': created,
+    return ModelData(x, y, pd.DataFrame({'created_at_utc': created,
         'closed_at_utc': created + pd.Timedelta(minutes=30)}))
 
 
@@ -34,7 +35,7 @@ class WeightTests(unittest.TestCase):
         p = fixture(); origin = pd.Timestamp('2026-05-01', tz='UTC')
         ids = p.X.index[p.metadata.created_at_utc.ge('2026-04-01') & p.metadata.closed_at_utc.lt(origin)]
         x = probability_frame(p.X.loc[ids]); y = p.y.loc[ids]; dates = p.metadata.loc[ids, 'created_at_utc']
-        old = CalibrationModel('hurdle_base').fit(x, y, dates)
+        old = H0().fit(x, y, dates)
         new = TimeDecayH0(None).fit(x, y, dates, origin)
         np.testing.assert_array_equal(old.predict_raw(x), new.predict_raw(x))
         model = TimeDecayH0(7).fit(x, y, dates, origin)

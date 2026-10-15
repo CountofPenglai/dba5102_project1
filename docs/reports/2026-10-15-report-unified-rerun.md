@@ -34,7 +34,7 @@
 | 公告收缩10 | 293.564338 | 184.439853 | 295.150078 | 185.244718 |
 | 公告收缩100 | 293.564338 | 184.439853 | 295.150078 | 185.244718 |
 
-单位：USDC/BTC。完整网格见[model_comparison.csv](../results/report_unified_v3_20261015_r2/validation/model_comparison.csv)，分月/方向/期限/尾部见[summary.csv](../results/report_unified_v3_20261015_r2/validation/summary.csv)。报告模型的全部数值已替换为本次输出；历史原表留作追溯，不再充当当前报告成绩来源。
+单位：USDC/BTC。完整网格见[model_comparison.csv](../results/report_unified_v3_20261015_r2/validation/model_comparison.csv)，分月/方向/期限/尾部见[summary.csv](../results/report_unified_v3_20261015_r2/validation/summary.csv)。报告模型的全部数值已替换为本次输出；历史原表仅从Git清理前版本追溯，不再保留在当前结果目录。
 
 混合40%/15%相对Base的月等权RMSE下降0.176%、月等权MAE下降0.478%，但全期逐单RMSE上升0.157%。5/6/7月的候选RMSE为244.999、346.482、278.491，Base为246.602、349.129、275.384。7月退化得到缓解，仍未超过Base；改换数据口径没有产生新的全面优势。
 
@@ -48,7 +48,7 @@
 
 因此，结论是“当前统一窗口无法估计受约束的公告修正”，而非“公告信息没有价值”或“模型学得了零影响”。若以后继续研究，应另行讨论更长的公告历史窗与公平对照；本轮没有放宽门槛、扩大窗口或按结果选择条件。
 
-明细：[支持统计](../results/report_unified_v3_20261015_r2/validation/announcement_support.csv)、[预测回退统计](../results/report_unified_v3_20261015_r2/validation/announcement_routing.csv)。旧4–6月开发、7月压力结果仅保留历史解释，不再混入当前模型排名。
+明细：[支持统计](../results/report_unified_v3_20261015_r2/validation/announcement_support.csv)、[预测回退统计](../results/report_unified_v3_20261015_r2/validation/announcement_routing.csv)。旧日期口径的结果已移至Git历史，不混入当前模型排名。
 
 ## 4 尾部、金额与稳定性
 
@@ -62,6 +62,14 @@
 
 入口为 `pp_models.report_unified_study`，同时接收明确的canonical和市场文件路径；无需旧H0实验的完整前置运行，只读取旧市场时间前缀。具体命令见[README](../../README.md)。来源为main `9c2389b`加本轮适配，实际源码、配置、日历、参数和输入指纹留在本次运行归档。
 
-第一轮在最终环境记录阶段遇到默认数据目录错误；计算产物保留为失败档案，不作为交付依据。修正为显式数据路径后重新完整执行，最终采用 `report_unified_v3_20261015_r2`。自动化测试271项通过；独立核验不拟合模型，复算共同历史队列、跨模块H0参数、99组日聚合、89组逐单固定/公告重放、86组混合RMSE恒等式、公告支持与风险比例。具体计数以[核验记录](../results/report_unified_v3_20261015_r2/independent_verification.json)为准。
+第一轮在最终环境记录阶段遇到默认数据目录错误；该次失败不作为交付依据；临时失败产物已在后续架构清理中删除。修正为显式数据路径后重新完整执行，最终采用 `report_unified_v3_20261015_r2`。自动化测试271项通过；独立核验不拟合模型，复算共同历史队列、跨模块H0参数、99组日聚合、89组逐单固定/公告重放、86组混合RMSE恒等式、公告支持与风险比例。具体计数以[核验记录](../results/report_unified_v3_20261015_r2/independent_verification.json)为准。
 
-完整本地运行耗时 112.4 秒，进程峰值内存 0.84 GiB；新官方验证读取尝试为0。五类已使用v3的历史结果共5,777个分组复现，最大数值差约2.91×10⁻¹¹，为浮点舍入。当前报告和索引指向新统计；历史实验与原协议不被静默改写。未自动提交、推送或部署。
+完整本地运行耗时 112.4 秒，进程峰值内存 0.84 GiB；新官方验证读取尝试为0。五类已使用v3的历史结果共5,777个分组复现，最大数值差约2.91×10⁻¹¹，为浮点舍入。当前报告和索引指向新统计；旧运行来源事实不被改写；历史实验和旧协议从清理前Git版本追溯。未自动提交、推送或部署。
+
+## 6 架构清理后的复现
+
+当前实现已将H0、评分、尾部上下文、重采样、行情读取与核验拆成公共组件；旧模型实验依赖和旧训练CLI已删除。数据采用flat v2统一池，只按验证协议v3确定角色。报告数值和研究结论不变，重构复算只用于数值回归验收。
+
+当前入口为`python -m pp_models`，输入与核验见[数据流程](../data_pipeline.md)、[模型说明](../model_design.md)。原运行的271项测试和耗时属于其当时版本，当前清理的测试与复现证据另见[清理记录](../plans/2026-10-15-report-architecture-cleanup.md)。
+
+清理后99配置复算和独立核验均通过；报告聚合最大数值差1.46×10⁻¹¹，样本不变。当前86项测试通过；详见[清理核验摘要](../results/architecture_cleanup_verification.json)。

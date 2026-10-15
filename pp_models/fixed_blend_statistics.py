@@ -2,9 +2,9 @@
 import numpy as np
 import pandas as pd
 from threadpoolctl import threadpool_limits
-from .two_stage_study import aggregate, metric_values
-from .frozen_candidate_statistics import scoped_macro, ratio
-from .put_final_statistics import scope_frames, paired_daily, differences, draw_weights
+from .metrics import aggregate, metric_values
+from .metrics import scoped_macro, ratio
+from .resampling import scope_frames, paired_daily, differences, draw_weights
 
 
 
