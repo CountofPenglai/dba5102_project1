@@ -1,0 +1,2 @@
+# Public-source evidence must retain its original bytes, including CRLF/trailing spaces.
+external_data/macro_events/sources/**/*.html -text -whitespace
