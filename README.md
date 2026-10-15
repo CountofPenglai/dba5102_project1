@@ -11,7 +11,11 @@
 | 粗网格最优Call50%/Put25% | 293.114750 | 183.652670 | 296.046896 |
 | 细网格最优Call40%/Put15% | **293.048025** | **183.558057** | 295.614043 |
 
-误差单位USDC/BTC。月等权RMSE先对三个单月MSE等权平均再开方，全期逐单则按订单数加权，两种口径必须并列。最优相对Base的改善区间仍跨0，Call净金额偏差扩大10.81%。见[细网格报告](docs/reports/2026-10-15-h0-blend-fine.md)和[版本化关键统计](docs/results/README.md)。
+误差单位USDC/BTC。月等权RMSE先对三个单月MSE等权平均再开方，全期逐单则按订单数加权，两种口径必须并列。最优相对Base的改善区间仍跨0，Call净金额偏差扩大10.81%。见[统一重跑报告](docs/reports/2026-10-15-report-unified-rerun.md)和[版本化关键统计](docs/results/README.md)。
+
+本轮已将报告内99个既有配置按统一协议重新计算；公告三档修正均因事件支持不足回退Base。原实验保留追溯，当前表格和Word统一采用`report_unified_v3_20261015_r2`结果。
+
+面向商业汇报的[研究报告大纲 Word](docs/deliverables/研究报告大纲_H0与Base混合模型.docx)已按当前主线更新，涵盖H0/Base混合的形成过程、关键探索、共同队列结果和适用局限；来源版本及交接说明见[文档索引](docs/research_document_index.md)。
 
 ## 模型与合并范围
 
@@ -52,6 +56,17 @@ python -m venv .venv
 ```
 
 审计和预处理使用`--data-dir`指定已获授权的原始资料；默认是仓库旁`docs/Jasper Vault Options Pricing Optimisation(Included Base Premium)/`。H0研究读取本仓库`outputs/preprocessing/`的经过哈希验证的canonical产物。完整生成数据、虚拟环境和运行档案由`.gitignore`排除。
+
+当前报告可用一个入口重新执行（必须提供已授权canonical目录与市场文件，并使用未占用的run-id）：
+
+```sh
+.venv/bin/python -m pp_models.report_unified_study --run-id report_unified_v3_local --data-dir /absolute/path/to/outputs/preprocessing --market-path /absolute/path/to/btc_market_history.csv
+.venv/bin/python scripts/verify_report_unified.py outputs/model_studies/report_unified_v3_local
+```
+
+该入口使用上述v3协议，重新拟合全部既有配方，统一评分和尾部定义；输入位置显式传入，不依赖旧H0运行的完整归档。新官方验证仍禁止读取。实际输入、配置、源码、参数和哈希记录在忽略版本控制的运行目录中；版本化结果仅保留关键聚合。更多说明见[统一重跑报告](docs/reports/2026-10-15-report-unified-rerun.md)。
+
+以下为**历史单项入口**，保留原前置依赖；不应把它们的不同协议成绩混入当前报告。
 
 以下顺序用于**明确重新开展实验**，安装/合并时不会自动运行。前置是通过`pp_data`生成兼容的canonical数据；输出目录必须不存在，不覆盖历史运行，各阶段校验前置参考和来源哈希。
 

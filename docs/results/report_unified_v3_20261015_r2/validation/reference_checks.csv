@@ -1,0 +1,6 @@
+previous_run,groups,protocol,maximum_absolute_difference,reproduced
+h0_time_decay_20261015,212,v3,1.4551915228366852e-11,True
+h0_state_fallback_20261015,318,v3,1.4551915228366852e-11,True
+h0_hourly_amount_20261015,265,v3,1.4551915228366852e-11,True
+h0_blend_ratios_20261015,1431,v3,1.4551915228366852e-11,True
+h0_blend_fine_20261015,3551,v3,2.9103830456733704e-11,True

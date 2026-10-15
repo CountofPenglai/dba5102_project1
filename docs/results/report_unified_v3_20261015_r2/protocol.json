@@ -1,0 +1,20 @@
+{
+  "history_days": 30,
+  "label_rule": "created in [max(training_start,D-30d),D), closed strictly before D",
+  "official_validation": "forbidden",
+  "old_july_status": "rolling_validation; canonical test storage retained without repartitioning",
+  "report_months": [
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "selection": "fixed exploratory candidates, no parameter search or automatic adoption",
+  "tail_history": "monthly q90 from April onward, created and closed strictly before month start",
+  "timezone": "UTC",
+  "training_start": "2026-04-01T00:00:00Z",
+  "update_days": 7,
+  "validation_end": "2026-07-31T17:11:48Z",
+  "validation_start": "2026-05-01T00:00:00Z",
+  "version": "rolling_validation_v3",
+  "weekly_label_feedback": true
+}

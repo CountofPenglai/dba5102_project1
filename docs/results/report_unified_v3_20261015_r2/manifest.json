@@ -1,0 +1,61 @@
+{
+  "artifacts": {
+    "metrics/validation/announcement_routing.csv": "7b82167f739781c78cf0c96162453831ff75d4fdf9eeb6570e04e8d98c4e52bc",
+    "metrics/validation/announcement_support.csv": "d75f92863249a90353becfeb301ff3b0f54db0c6fdc262e1b3285992b0229d7f",
+    "metrics/validation/comparisons.csv": "9d29b6456276cca448f0f6270126122ce64017113ea45283d8df3d0e848cf987",
+    "metrics/validation/daily.csv": "4f8e64794663c04e73adb8ea7c2e84871af0254c868f419c9b6faaed6bbb7602",
+    "metrics/validation/direction_tenor.csv": "0f28ee56abfd989d4e8e0aa1125740f2f968e51ec72975ab49a727c790e58901",
+    "metrics/validation/fixed_grid.csv": "009cd08e5e0ac348c28b06140c131c9709764012ab1810a2a9b59dc18ecaf4be",
+    "metrics/validation/influence.csv": "653420f612ddc177862bdb4118f228051a3cc22094a675c98985bb8a3d9ccaf0",
+    "metrics/validation/intervals.csv": "583c5f249f5e409413fca212fbf99ce937f161cf68376eeed4cf5ea54225f9c0",
+    "metrics/validation/macro_monthly.csv": "be81c136decf94361784b4bd85e3e005f92907184aeb5654d82d7989bed0c5f2",
+    "metrics/validation/model_comparison.csv": "fea6aba7d2586b376c32e1ed5b7bfef477753af3443daf967edd805ca2743722",
+    "metrics/validation/monthly_risk_constraints.csv": "d4cc0d1e37363afff3b6081aac353c302c0ea9d1d800e2422d40778f94d83716",
+    "metrics/validation/paired_daily.csv": "df2a2a93f2f4b1a123d9e84f7fcb4d0abdb557ac9df4a430721b9f8f24318843",
+    "metrics/validation/reference_checks.csv": "eea613b39685ed872b04ba6ba8636181793656447d250406926a53d18d78c2f7",
+    "metrics/validation/risk_constraints.csv": "30edc478e7edb54a6963ebb238be3050cb1b47aa7875e58969110b05c5887bdf",
+    "metrics/validation/scoped_macro.csv": "103d6b9dacabfed93e2eb42a1888e768656a1d1d78ef5a0f01730855b07310b5",
+    "metrics/validation/summary.csv": "b5c4bebb3935fb055e1742f2b9604f0f6c4ef474f12004407ee7096cd2f43590",
+    "metrics/validation/training_cohorts.csv": "128db3028aa2c2b76c240688f59827f702e3c6cbd73fc4f8338c11f521441533",
+    "metrics/validation/weight_diagnostics.csv": "684a9d24ba4b8da9d32280226b1f5db1fa49235dd4da17e79e785edb656231a1",
+    "provenance/config.json": "c9393341ec922c061c293d4e9f813196113cf03fcc7444c6115e1bd6b58ab2bc",
+    "provenance/market.json": "b4492212230c14c678aaaa7393bfd2559508ef057f41ebed76657f84d8d8c83e",
+    "provenance/parameters.json": "c57ce7e3df119d02743d6801b879fff884b4539911e4a64f46df910de5376c9f",
+    "provenance/preflight.json": "22a66f8dcdf0801b1cb9849fcedbb39b706691feed63f00c9a0a56e3e17d9832",
+    "provenance/protocol.json": "5413b4df285585e6e25c71116a9ebe425a8c4be21ad1c38992e9bb87b4594fba",
+    "provenance/source.zip": "6038cdbbef9b47d87fca5986100186346d48e9910d86a7f0f5474b02e9e6bd06"
+  },
+  "coverage": {
+    "labels_unavailable": 0,
+    "query_orders": 4640,
+    "scored_orders": 4640
+  },
+  "elapsed_seconds": 112.37196266699993,
+  "environment": {
+    "interpret-core": "0.7.8",
+    "joblib": "1.6.0",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "pygam": "0.12.0",
+    "python": "3.12.14",
+    "scikit-learn": "1.7.2",
+    "scipy": "1.16.3",
+    "threadpoolctl": "3.7.0"
+  },
+  "fits": {
+    "announcement": 36,
+    "h0_coarse": 15,
+    "h0_hourly": 12,
+    "h0_state": 15,
+    "h0_time_decay": 36,
+    "hourly_amount": 36
+  },
+  "max_rss_bytes": 903643136,
+  "official_validation_open_attempts": 0,
+  "old_july_role": "seen_rolling_validation",
+  "premature_test_attempts": 0,
+  "producer": "report_unified_v1",
+  "recipes": 99,
+  "reference_results_reproduced": true,
+  "status": "complete"
+}
