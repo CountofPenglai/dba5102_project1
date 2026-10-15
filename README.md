@@ -55,6 +55,8 @@ python -m venv .venv
 
 以下顺序用于**明确重新开展实验**，安装/合并时不会自动运行。前置是通过`pp_data`生成兼容的canonical数据；输出目录必须不存在，不覆盖历史运行，各阶段校验前置参考和来源哈希。
 
+状态回退与小时金额响应还必须保留原始`btc_market_history.csv`，位置固定为`<仓库父目录>/docs/Jasper Vault Options Pricing Optimisation(Included Base Premium)/btc_market_history.csv`，即`pp_data.config.DEFAULT_DATA`下的市场文件。预处理的自定义`--data-dir`不会传递给这些研究入口。它们只读取历史截止前的市场前缀，并要求前缀SHA256为`cbf5d491d167ac377beb844dc9794e4f5e9986f72859035426f7789e67924b50`；这是前缀哈希，不是整个可继续追加行情的文件哈希。独立工作树的仓库父目录可能不同，运行前须按该位置准备已授权市场文件，不能仅复制canonical目录。
+
 ```sh
 .venv/bin/python -m pp_models.h0_time_decay_study --run-id h0_time_decay_20261015
 .venv/bin/python -m pp_models.h0_state_fallback_study --run-id h0_state_fallback_20261015
@@ -62,7 +64,7 @@ python -m venv .venv
 .venv/bin/python -m pp_models.h0_blend_fine_study --run-id h0_blend_fine_20261015
 .venv/bin/python scripts/verify_h0_blend_fine.py outputs/model_studies/h0_blend_fine_20261015
 
-# 小时金额响应也只需要时间衰减运行中的同协议H0参考。
+# 小时金额响应的前置运行仅为时间衰减；同时需要上述默认位置的市场文件。
 .venv/bin/python -m pp_models.h0_hourly_amount_study --run-id h0_hourly_amount_20261015
 ```
 
