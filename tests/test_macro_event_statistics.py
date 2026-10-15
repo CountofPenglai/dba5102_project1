@@ -43,4 +43,3 @@ class MacroStatisticsTests(unittest.TestCase):
         self.assertAlmostEqual(got['value_treated'],2)
         self.assertAlmostEqual(got['value_control'],8)
         self.assertIsNone(matched_event(a,b.assign(cell='c'),['cell'],['value']))
-

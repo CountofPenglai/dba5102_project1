@@ -68,4 +68,3 @@ class MacroCalendarTests(unittest.TestCase):
             b['as_of_utc'] = '2026-10-16T12:00:00Z'; b['records'].pop()
             with self.assertRaisesRegex(ValueError, 'delete'):
                 publish_calendar(b, root)
-

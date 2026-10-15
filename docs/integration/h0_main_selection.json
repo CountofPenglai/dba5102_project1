@@ -231,5 +231,9 @@
     "tests/test_base_multiplier_study.py": "Only shared synthetic fixture import redirected to tests/research_fixtures.py; test assertions unchanged.",
     "tests/test_frozen_candidate_study.py": "Only shared synthetic fixture import redirected to tests/research_fixtures.py; test assertions unchanged."
   },
-  "extracted_fixture_source": "tests/test_state_calibration_study.py::fixture"
+  "extracted_fixture_source": "tests/test_state_calibration_study.py::fixture",
+  "whitespace_only_adjustments": [
+    "tests/test_macro_calendar.py",
+    "tests/test_macro_event_statistics.py"
+  ]
 }
