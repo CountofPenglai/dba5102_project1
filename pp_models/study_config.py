@@ -15,7 +15,7 @@ def load_study_config(path=None):
     return json.loads(Path(path or STUDY_CONFIG).read_text(encoding="utf-8"))
 
 
-def validate_study(base, study):
+def validate_study(base, study, models=None):
     keys = {"version", "cohort", "use_base", "threads", "rmse_tolerance", "baseline_smoothing",
             "periods", "stages", "seconds_per_fit_assumption"}
     if not isinstance(study, dict) or set(study) != keys or study["version"] != "validation_study_v1":
@@ -63,7 +63,7 @@ def validate_study(base, study):
                 not all(type(v) in (int, float) and math.isfinite(v) for v in timing) or
                 not 0 < timing[0] <= timing[1]):
             raise ValueError("Invalid unmeasured timing interval")
-    return resolve_config(base, study["cohort"], study["use_base"])
+    return resolve_config(base, study["cohort"], study["use_base"], models)
 
 
 def candidate_config(base, model, parameter, value, study):

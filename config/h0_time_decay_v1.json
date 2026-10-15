@@ -1,0 +1,16 @@
+{
+  "version": "h0_time_decay_v1",
+  "validation_protocol": "config/validation_protocol_v3.json",
+  "models": ["official_raw", "h0", "h0_decay7", "h0_decay14"],
+  "half_life_days": {"h0": null, "h0_decay7": 7, "h0_decay14": 14},
+  "primary": "h0_decay7",
+  "age_basis": "creation_time",
+  "probability_weight_normalization": "sum_equals_direction_order_count",
+  "scaler": "unweighted_original_h0",
+  "logistic_C": 0.1,
+  "residual_correction": false,
+  "trend_overlay": false,
+  "parameter_search": false,
+  "bootstrap_blocks": [3, 7, 14],
+  "bootstrap_repeats": 2000
+}

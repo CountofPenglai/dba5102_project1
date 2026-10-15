@@ -30,6 +30,8 @@ def main(argv=None):
                                   else "Explicit validation-only tuning and confirmation")
         sub.add_argument("--config", type=Path)
         sub.add_argument("--study-config", type=Path)
+        sub.add_argument("--models", nargs="+", choices=MODEL_NAMES,
+                         help="Only search the selected models; mean baselines are always included")
         sub.add_argument("--dataset-dir", type=Path, default=DEFAULT_OUTPUT)
         if command == "study-run":
             sub.add_argument("--run-id", required=True)
@@ -45,20 +47,21 @@ def main(argv=None):
             from .study import plan_study, run_study, study_snapshot
             from .study_config import load_study_config, validate_study
             base, study = load_model_config(args.config), load_study_config(args.study_config)
-            resolved = validate_study(base, study)
+            resolved = validate_study(base, study, args.models)
             before = study_snapshot(args.dataset_dir)
-            for name in MODEL_NAMES:
+            for name in resolved["selected_models"]:
                 build_model(name, resolved)
             pool = load_validation_pool(resolved, args.dataset_dir)
             if study_snapshot(args.dataset_dir) != before:
                 raise ValueError("Development sources changed during loading")
-            plan = plan_study(pool, base, study)
+            plan = plan_study(pool, base, study, args.models)
             if args.command == "study-plan":
                 print(canonical_json(plan).rstrip())
                 return 0
             destination = run_study(args.output_dir, args.run_id, base, study, pool, before,
                 resume=args.resume, progress=lambda msg: print(msg, file=sys.stderr),
-                source_check=lambda: study_snapshot(args.dataset_dir), dataset_dir=args.dataset_dir)
+                source_check=lambda: study_snapshot(args.dataset_dir), dataset_dir=args.dataset_dir,
+                models=args.models)
             print(f"Completed validation-only study: {destination}")
             return 0
         if args.command == "train" and args.split == "test" and args.validation_run is None:

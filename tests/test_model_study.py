@@ -49,6 +49,29 @@ class StudyTests(unittest.TestCase):
         self.assertEqual(result["baseline_updates"], 6)
         self.assertFalse(result["training_performed"])
 
+    def test_selected_model_only_runs_and_cannot_resume_as_another_selection(self):
+        load, plan, run, _ = self.api()
+        base = load_model_config() | {"min_train_rows": 1}
+        budget = plan(study_pool(), base, load(), models=["gam"])
+        self.assertEqual(budget["max_model_fits"], 11)  # Five candidates x two days + one confirmation.
+        self.assertEqual([r["model"] for r in budget["models"]], ["gam"])
+        calls = []
+        with tempfile.TemporaryDirectory() as temp:
+            path = run(Path(temp), "gam_only", base, load(), study_pool(), {"fixture": True},
+                       models=["gam"], evaluator=evaluator_probe(calls))
+            self.assertEqual(len(calls), 10)  # Five tuning + one confirmation + four baseline periods.
+            self.assertEqual({r[0] for r in calls}, {"gam", "rolling_mean_30d", "rolling_group_mean_30d"})
+            self.assertEqual(set(json.loads((path / "provenance/selected_models.json").read_text())), {"gam"})
+            run(Path(temp), "gam_only", base, load(), study_pool(), {"fixture": True},
+                models=["gam"], resume=True, evaluator=evaluator_probe(calls))
+            self.assertEqual(len(calls), 10)
+            with self.assertRaisesRegex(ValueError, "changed"):
+                run(Path(temp), "gam_only", base, load(), study_pool(), {"fixture": True},
+                    models=["ebm"], resume=True, evaluator=evaluator_probe(calls))
+        for invalid in ([], ["gam", "gam"], ["unknown"]):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                plan(study_pool(), base, load(), models=invalid)
+
     def test_complete_workflow_deduplicates_and_freezes_before_confirmation(self):
         load, _, run, _ = self.api()
         calls = []

@@ -1,148 +1,89 @@
-# PP 定价研究：数据处理与模型框架
+# PP定价研究：H0与官方Base的有限混合
 
-当前已实现数据审计、统一预处理，以及 GAM、EBM、浅层梯度提升树的统一训练框架。**尚未启动真实模型训练。** 审计仍只输出关键统计量；预处理生成固定分割数据、标签和来源清单；未来模型运行也默认只保存关键指标和来源，不导出逐笔预测、模型文件或模拟收益报告。原始文件保留在 `../docs/`，程序不会修改它们。
+更新：2026-10-15。主分支收录 **H0/Base混合、4月训练与5–7月滚动验证、官方宏观公告日历与分析**；额外保留H0时间衰减、小时金额响应两项探索。目标为估计BTC保险订单的每BTC预期赔付。原始订单与行情不随仓库发布。
 
-研究中各问题的证据、已确定原则与待讨论方案统一记录在 [研究问题与处理方案](docs/research_decisions.md)。
+**当前结论：** Call `40% H0 + 60% Base`、Put `15% H0 + 85% Base` 是细网格中的月等权误差最优点，邻近比例近乎持平；全期逐单RMSE和完整风险约束仍未超过Base，不是已经部署的最终模型。
 
-当前模型入口见 [模型使用说明](docs/model_training.md)，当前研究优先使用 [仅验证期的训练与调参计划](docs/validation_training_plan.md)。三模型与 B0/B1 均值对照均已实现，增加有限搜索、阶段确认和中断续跑；**尚无真实训练成绩**。本阶段只读取训练期与验证期 CSV。
+| 同一5–7月队列 | 月等权RMSE | 月等权MAE | 全期逐单RMSE |
+|---|---:|---:|---:|
+| Base | 293.564338 | 184.439853 | **295.150078** |
+| H0 | 298.010152 | 186.263090 | 303.531640 |
+| 粗网格最优Call50%/Put25% | 293.114750 | 183.652670 | 296.046896 |
+| 细网格最优Call40%/Put15% | **293.048025** | **183.558057** | 295.614043 |
 
-## 仓库范围
+误差单位USDC/BTC。月等权RMSE先对三个单月MSE等权平均再开方，全期逐单则按订单数加权，两种口径必须并列。最优相对Base的改善区间仍跨0，Call净金额偏差扩大10.81%。见[细网格报告](docs/reports/2026-10-15-h0-blend-fine.md)和[版本化关键统计](docs/results/README.md)。
 
-仓库包含程序、配置、人工测试与研究文档。提供方的原始资料和数据不随仓库发布；`outputs/` 下的生成数据与统计、本地虚拟环境和凭据文件均由 `.gitignore` 排除。文档中指向 `../docs/` 或 `../../docs/` 的提供方资料链接依赖原本的本地目录，不属于仓库文件。
+## 模型与合并范围
 
-新环境需自行准备已获授权的输入数据：可放在默认的相邻 `docs/Jasper Vault Options Pricing Optimisation(Included Base Premium)/` 目录，或在审计与预处理入口通过 `--data-dir` 指定。先生成预处理产物，再检查模型计划；仓库中的测试使用人工样本，不依赖提供方数据。
+H0为两阶段模型：分Call/Put估计正赔付概率，再用正赔付订单拟合相对Base的金额系数，输出`概率 × Base × 金额系数`。概率输入为Base、剩余期限及按波动标准化的方向价格位置；实现为`pp_models/calibration_models.py`中的`hurdle_base`。最终赔付仅作已结算训练目标和事后评价，不作定价输入。
 
-## 运行
+| 内容 | 价值与状态 | 依据 |
+|---|---|---|
+| 固定/动态混合与状态回退 | 固定混合减轻跨期退化；动态权重未胜出；不按月份拼赢家 | [粗网格](docs/reports/2026-10-15-h0-blend-ratios.md)、[回退](docs/reports/2026-10-15-h0-state-fallback.md)、[细网格](docs/reports/2026-10-15-h0-blend-fine.md) |
+| 验证协议v3 | 4月训练、5–7月滚动验证，30日已结算历史、每7日更新 | [说明](docs/validation_protocol_v3.md)、[配置](config/validation_protocol_v3.json) |
+| 官方宏观公告 | CPI、非农、FOMC日历、历史预告证据、跨公告/阶段分析及公告倍率研究记录 | [数据集](external_data/macro_events/README.md)、[阶段报告](docs/reports/2026-10-14-macro-phases.md)、[倍率结果](docs/reports/2026-10-14-macro-multiplier.md) |
+| **额外1：H0时间衰减** | 检验近期加权能否减少滞后；无稳定整体增量，保留分方向更新速度诊断 | [报告](docs/reports/2026-10-15-h0-time-decay.md) |
+| **额外2：小时金额响应** | 检验波动水平、变化速度和保守门控；局部尾部收益伴随普通订单代价 | [报告](docs/reports/2026-10-15-h0-hourly-amount.md) |
 
-需要 Python 3.10+，依赖见 `requirements.txt`。
+选中入口所需的共享加载、评估、统计及历史模型代码同时纳入。部分共享函数仍在旧研究模块中，这些模块作为依赖保留，不代表额外采用其研究方案。范围及来源哈希见[集成清单](docs/integration/h0_main_selection.json)，其他探索保留在研究分支。
+
+## 当前验证与数据边界
+
+- 训练起点 **2026-04-01 UTC**；验证为 **2026-05-01至2026-07-31 17:11:48 UTC**，右端不含。同队列4,640单，5/6/7月分别726/1,373/2,541单。
+- 从5月1日起连续每7日更新，每次只用此前30日创建、更新之前已结算的订单；周内冻结。7月1–2日沿用6月26日参数。
+- 验证标签结算后可用于之后的合法更新，不能影响已有预测。当前依赖标签反馈，官方无标签部署兼容性尚未验证。
+- [预处理v1](config/preprocessing_v1.json)中的train/validation/test仍为不可变存储分区；v3从其并集中按时间限定角色。**旧test目录的7月现在是已见验证数据**，不重新分区、不补回原来排除的跨边界订单。
+- 新官方验证文件`pp_transactions_validation.csv`禁止读取。未启动全量训练或未知官方测试。
+- RMSE优先，MAE监控代价；方向/期限、普通/尾部、现金低估另查。尾部阈值只用月初可用历史，真实尾部身份仅供评价。
+
+详见[协议v3](docs/validation_protocol_v3.md)。5–7月已经反复用于开发，选参结果不是独立盲测。
+
+## 环境和运行
+
+Python 3.10+；已记录实验环境为Python 3.12。测试使用合成样本，不需要提供方订单。
 
 ```sh
-python -m pip install -r requirements.txt
-python -m pp_audit
-python -m pp_data
+python -m venv .venv
+.venv/bin/python -m pip install -r requirements-models.txt
+.venv/bin/python -m unittest discover -s tests
+.venv/bin/python -m pp_audit --help
+.venv/bin/python -m pp_data --help
+.venv/bin/python -m pp_models.h0_blend_fine_study --help
 ```
 
-运行位置为本目录。两个入口均接受 `--data-dir`、`--output-dir`。`pp_audit --cutoff` 只改变审计查询时间，不改变任何模型数据分割；模型预处理只有 `python -m pp_data` 一个入口，使用下方唯一配置，不接受比例、随机种子或切分日期参数。时间均按 UTC 解析。
+审计和预处理使用`--data-dir`指定已获授权的原始资料；默认是仓库旁`docs/Jasper Vault Options Pricing Optimisation(Included Base Premium)/`。H0研究读取本仓库`outputs/preprocessing/`的经过哈希验证的canonical产物。完整生成数据、虚拟环境和运行档案由`.gitignore`排除。
 
-模型依赖位于 `requirements-models.txt`，建议在项目 `.venv` 中安装。安全检查为 `.venv/bin/python -m pp_models check`；无参数只显示帮助，不训练、不写文件。未来明确执行 `.venv/bin/python -m pp_models train --split validation --run-id validation_v1` 才会启动训练。本轮未执行该训练命令，完整测试使用 `.venv/bin/python -m unittest discover -s tests -v`。
+以下顺序用于**明确重新开展实验**，安装/合并时不会自动运行。前置是通过`pp_data`生成兼容的canonical数据；输出目录必须不存在，不覆盖历史运行，各阶段校验前置参考和来源哈希。
 
-本轮新增的推荐入口为 `.venv/bin/python -m pp_models study-plan`：只列出调参/确认范围、候选与资源预算，不训练。将来显式使用 `study-run --run-id ID` 才会执行完整验证期研究，`--resume` 支持中断续跑。该流程没有测试集参数，不访问测试集 CSV；旧单配置 `check/train` 入口仍保留，但本阶段不调用其测试期路径。
+状态回退与小时金额响应还必须保留原始`btc_market_history.csv`，位置固定为`<仓库父目录>/docs/Jasper Vault Options Pricing Optimisation(Included Base Premium)/btc_market_history.csv`，即`pp_data.config.DEFAULT_DATA`下的市场文件。预处理的自定义`--data-dir`不会传递给这些研究入口。它们只读取历史截止前的市场前缀，并要求前缀SHA256为`cbf5d491d167ac377beb844dc9794e4f5e9986f72859035426f7789e67924b50`；这是前缀哈希，不是整个可继续追加行情的文件哈希。独立工作树的仓库父目录可能不同，运行前须按该位置准备已授权市场文件，不能仅复制canonical目录。
 
-## 唯一训练、验证、测试分割
+```sh
+.venv/bin/python -m pp_models.h0_time_decay_study --run-id h0_time_decay_20261015
+.venv/bin/python -m pp_models.h0_state_fallback_study --run-id h0_state_fallback_20261015
+.venv/bin/python -m pp_models.h0_blend_ratios_study --run-id h0_blend_ratios_20261015
+.venv/bin/python -m pp_models.h0_blend_fine_study --run-id h0_blend_fine_20261015
+.venv/bin/python scripts/verify_h0_blend_fine.py outputs/model_studies/h0_blend_fine_20261015
 
-配置文件：[config/preprocessing_v1.json](config/preprocessing_v1.json)。区间均左闭右开，同时要求订单结算时间严格早于所属组结束时间。
-
-| 分割 | 创建时间范围（UTC） | 风险研究样本 | 官方基础价共同样本 |
-| --- | --- | ---: | ---: |
-| train | 2026-02-01 ≤ t < 2026-06-01 | 2,253 | 2,020 |
-| validation | 2026-06-01 ≤ t < 2026-07-01 | 2,261 | 1,373 |
-| test | 2026-07-01 ≤ t < 2026-07-31 17:11:48 | 2,541 | 2,541 |
-
-- 最后时刻取官方留出数据开始时间；若输入元数据与该固定时刻冲突，程序报错，不自动挪动边界。当前不读取或合并官方验证订单文件。
-- 原始 7,204 条中，125 条未通过共享技术条件，24 条结算时间跨越或恰好落在所属组结束点，最终风险样本 7,055 条，共同样本 5,934 条。各排除原因按顺序互斥计数。
-- 正常提前结算保留；跨边界记录不移入另一组。赔付缺失不填零，基础价缺失不插补。
-- 共同样本是风险样本中的固定子集，保持相同 ID、所属组和次序；缺失基础价的有效订单仅用于不含基础价的风险研究。共同样本的实际验证覆盖从 6 月 12 日开始，训练覆盖至 5 月 28 日，不能理解为完整月份均匀覆盖，详见汇总。
-- 7 月已查看过描述统计，称为**内部后期测试集**，不能称为完全未接触的官方盲测。用户后来确认采用按天更新：train 提供启动历史，validation 选择算法及窗口 / 平滑等超参数，test 按冻结规则逐日评价。测试期已结算的订单可用于之后日期的模型更新，但不能影响已经产生的预测，也不能依据测试结果重新选择模型、窗口或余量策略。
-- 当前产物保留固定日期分区和样本名单。每天的训练池需在这些数据中按创建时间窗口与 `closedAt < 预测日UTC零点` 再筛选；预处理与加载接口本身不执行滚动训练。v1 排除的 24 条跨边界记录不自动补回。不要将完整验证 / 测试数据一次性合并后训练再回测。
-
-## 后续模型统一读取
-
-```python
-from pp_data import load_split
-
-train = load_split("train")                 # 共同样本，含官方基础价
-validation = load_split("validation")
-# 以上为日期分区，不是每天的最终训练池。
-# 逐日基准还须按预测日筛选历史窗口及已经结算的标签。
-# 6月选择算法与超参数，7月按冻结规则逐日前向评价。
-
-risk_train = load_split("train", cohort="risk")  # 更大样本，特征不含基础价
-ablation = load_split("train", use_base=False)   # 保持共同样本，移除基础价特征
+# 小时金额响应的前置运行仅为时间衰减；同时需要上述默认位置的市场文件。
+.venv/bin/python -m pp_models.h0_hourly_amount_study --run-id h0_hourly_amount_20261015
 ```
 
-`X` 仅包含白名单数值特征；`y` 是每 BTC 实际赔付；`metadata` 独立保留时间、历史成交保费和质量标记，**不能拼进模型输入**。三者以 `order_id` 对齐。ID 使用原始数据行序，来源文件校验值记录在清单中。
+`scripts/verify_h0_*.py`独立重放保存参数，不新增训练。核验原历史完整档案需对应源码快照、canonical和前置运行；`docs/results/`只有精选统计，不能替代完整运行目录。宏观历史分析/倍率还需要旧参考档案，见[交接索引](docs/research_document_index.md)。
 
-基础特征为方向、产品期限、合同剩余期限、数量、执行价、最近已结束行情价格、`log(行情价 / 执行价)`，以及过去 60、240、1440 分钟的对数收益和实现波动。波动定义为窗口内一分钟对数收益平方和的平方根，不年化。14 个可用特征中包含 1 个可选 API Base；风险口径使用其余 13 个。
+旧`python -m pp_models study-plan/study-run`保留早期六月GAM/EBM/浅层树流程，**不会自动采用v3**，不是当前H0默认入口。旧说明见[模型文档](docs/model_training.md)。
 
-N 分钟收益及波动要求 N+1 根完整、有效、连续 K 线，最近一根结束时间不晚于下单且距离不超过 60 秒。24 小时特征因此要求 1,441 根 K 线，略严于原审计的 1,440 根覆盖统计；当前所有技术候选均满足要求。没有全样本缩放、插补、分位数或风险阈值拟合；以后若模型需要学习数据变换，只能在该预测日合法的历史训练池上拟合，其规则在验证期确定。
+## 公告数据维护
 
-重新运行入口会重建相同产物。加载时验证全部输出哈希、生成代码和配置，并解析校验过的同一份内存内容；若代码或配置变化、产物损坏或混入不同版本，必须重新生成。清单最后写入，未完整发布的一批文件不能通过校验。输出必须使用专用目录，不允许与源目录重叠或覆盖陌生文件。预处理可以输出空分组供检查，但模型加载时会用明确的 `ValueError` 拒绝没有有效样本的分割或口径。
+`external_data/macro_events/`最后核对时间为2026-10-14。82条日程含65个主要事件；CPI/非农覆盖2026–2027，FOMC延至2028年1月。使用纽约时区转UTC，保留`known_by_utc`、历史预告和改期来源；未知或尚未公开不能当作“无公告”。
 
-## 结构
-
-```text
-pp_audit/                       审计程序
-  common.py                     字段定义、解析、指标格式
-  orders.py                     订单质量、样本数量和分组统计
-  market.py                     行情质量和可用分钟
-  alignment.py                  订单与已结束行情对齐、时间切分
-  __main__.py                   运行入口和分类输出
-pp_data/                        唯一模型数据处理与加载入口
-  config.py                     读取并校验固定配置
-  features.py                   定价时可见特征白名单
-  pipeline.py                   共享筛选、固定分割、标签与元数据
-  io.py                         生成清单、文件校验、load_split
-  __main__.py                   python -m pp_data
-pp_models/                      三模型与共同逐日前向框架
-  config.py                     特征/超参数校验与口径解析
-  estimators.py                 GAM / EBM / 浅层树统一接口
-  data.py                       固定数据加载与每日可用历史
-  evaluation.py                 每日拟合、预测和关键统计
-  runs.py                       唯一运行目录、来源和验证引用
-  __main__.py                   check（不训练）/ train（显式训练）
-  scoped_data.py                只读取并校验 train/validation 六表
-  baselines.py                  B0 整体均值 / B1 平滑分组均值
-  study_config.py               有限搜索与验证阶段定义
-  study.py                      预算、顺序调参、冻结确认、汇总
-  study_storage.py              候选记录、校验续跑、进程锁
-config/preprocessing_v1.json    唯一时间边界与处理版本
-config/models_v1.json           初始模型配置，尚未调优
-config/validation_study_v1.json  每模型 5–6 套候选与确认规则
-requirements-models.txt         单独的模型依赖
-tests/                          人工构造的小样本验证
-docs/research_decisions.md       研究问题、处理方案与决策状态
-docs/benchmark_design.md        初版训练目标、简单基准和逐日前向协议
-docs/model_training.md          模型运行、输出分类与不训练边界
-docs/validation_training_plan.md 三模型训练/调参/评估与算力估算
-docs/plans/                     实现计划与验证记录
-outputs/model_runs/<run-id>/    未来训练后才创建
-  metrics/{summary,daily}.csv   关键指标，不保存逐笔预测
-  provenance/                  配置、来源与产物哈希
-outputs/model_studies/<run-id>/ 未来验证研究运行后才创建
-  trials/                      各候选关键指标与校验记录
-  metrics/                     调参榜、确认期对照
-  provenance/                  阶段覆盖、锁定参数与执行状态
-outputs/training_plans/         只读规划产生的关键数量与资源估算
-outputs/data_audit/
-  orders/key_metrics.csv        订单关键指标
-  orders/segment_statistics.csv 按月份、方向、期限的统计
-  market/key_metrics.csv        行情关键指标
-  alignment/key_metrics.csv     行情覆盖、验证资料和匹配限制
-  alignment/cutoff_statistics.csv 时间切分时已知结果的样本数量
-outputs/preprocessing/
-  datasets/{train,validation,test}/
-    features.csv                预测特征（含order_id；基础价允许为空）
-    targets.csv                 总赔付、每BTC赔付、是否正赔付
-    metadata.csv                时间、来源行号、共同样本标记、实际保费
-  reports/split_statistics.csv  六组样本数量、覆盖和时间范围
-  reports/exclusion_statistics.csv 互斥排除原因及保留数量
-  manifest.json                 来源、配置、代码、环境与产物校验值
+```sh
+.venv/bin/python scripts/update_macro_calendar.py --source external_data/macro_events/sources/2026-10-14/verified_schedule_history.json --check-only
 ```
 
-`key_metrics.csv` 使用统一列：`metric`（稳定标识）、`value`、`unit`、`denominator`、`rate`、`definition`。`rate` 是 0–1 比例，仅在适用时填写；空值表示不可计算或不适用，不能当成零。统计口径写在 `definition` 中。
+新日程另建来源包，先检查后发布新快照，不覆盖历史版本。脚本不自动抓取或定时更新；未来训练/测试前仍需核对官方日期。详见[字段与维护流程](external_data/macro_events/README.md)。
 
-## 样本口径
+## 项目组织与交接
 
-- **有结果记录**：赔付字段为有限非负数，保费和数量有效。保费与赔付总额始终使用同一批记录；缺失赔付不填零。这些描述统计仍可能包含时间异常，不能称为模型收益。
-- **技术条件候选样本**：输入完整有效、数量与执行价为正、方向编码与文字一致、到期晚于创建、结算不早于创建、结果有效、单位保费计算一致；完全重复记录只保留首条。有效期限是正整数秒，不强制限定为当前七种产品。正常的提前结算不排除。
-- **基础价共同候选样本**：在上一口径上，要求基础价为正、markup 有效且非负、价格差额恒等式成立。
-- 以上是共享审计候选口径；预处理在此基础上增加固定分割、标签可获知与完整行情条件后导出模型数据。**输出不代表 PP 业务语义已经获得官方确认**。基础价匹配可能使用未来报价，因缺少匹配时刻无法逐笔核验。
-- 合同实际剩余期限与产品标称期限的偏差单独统计，绝对偏差超过 60 秒只标记，不自动删除；数秒到几十秒的延迟不直接判为错误。
-- 行情按完整一分钟使用，只有结束时间不晚于创建时间的 K 线可以匹配。重复时刻的所有行情行均视为不明确，不任意挑选其中一行。
-- 计算 60、240、1440 分钟覆盖时，要求最近 K 线不超过 60 秒、整个窗口每分钟连续且均通过行情质量检查。不能用零散分钟数量冒充连续覆盖。
-- 时间切分只把 `createdAt < cutoff` 且 `closedAt < cutoff` 的有结果记录视为当时可获知；测试边界处才结算的记录保守排除。
-- 赔付最高 1% 集中度使用有结果记录数量乘以 1% 后向上取整，按赔付金额排序；空样本或总赔付为零时该占比留空。
+`pp_audit/`负责审计，`pp_data/`负责固定存储与加载，`pp_models/`负责模型及统计，`pp_calendar/`负责公告时间和版本；`scripts/`存独立分析、维护与核验入口。`config/`存固定配置，`docs/reports/`存选中报告，`docs/results/`存关键统计，`docs/integration/`存合并来源，`outputs/`存不提交的本地完整产物。
 
-## 当前资料边界
-
-API Base 的匹配时间、完整报价日志、未购买记录、对冲与手续费成本、正式评分规则未提供。原始数据已按提供方规则过滤负 markup。审计会保留这些限制及相关数量，不推断真实需求、正式模型收益或官方 baseline 得分。
+[研究交接索引](docs/research_document_index.md) · [研究决策](docs/research_decisions.md) · [集成计划](docs/plans/2026-10-15-main-integration.md)。尚未建立需求模型，不将赔付预测改善等同于真实利润提升。

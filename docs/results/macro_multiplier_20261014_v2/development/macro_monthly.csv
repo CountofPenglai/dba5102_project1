@@ -1,0 +1,4 @@
+model,months,orders,macro_rmse_per_btc,macro_mae_per_btc
+announcement,3,2953,292.542165907,182.090655488
+h0,3,2953,290.972373427,165.777875382
+official_raw,3,2953,292.573754424,182.130726219

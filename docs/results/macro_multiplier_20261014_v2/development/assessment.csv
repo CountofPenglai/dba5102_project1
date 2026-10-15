@@ -1,0 +1,2 @@
+model,rmse_delta_vs_h0,mae_delta_vs_h0,accuracy_vs_h0_pass,rmse_delta_vs_official_raw,mae_delta_vs_official_raw,accuracy_vs_official_raw_pass,overall_bias_pass,mae_vs_base_pass,risk_pass,locked_development_eligible,adoption_point_pass
+announcement,1.56979247955,16.3127801061,False,-0.0315885167647,-0.0400707302805,True,False,True,False,True,False

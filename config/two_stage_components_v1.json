@@ -1,0 +1,31 @@
+{
+  "version": "two_stage_components_v1",
+  "protocol": "config/validation_protocol_v2.json",
+  "amount_candidates": {
+    "s_contract_30": ["contract", 30],
+    "s_contract_100": ["contract", 100],
+    "s_market_30": ["market", 30],
+    "s_market_100": ["market", 100]
+  },
+  "probability_candidates": {
+    "p_contract_c003": ["contract", 0.03],
+    "p_contract_c01": ["contract", 0.1],
+    "p_market_c003": ["market", 0.03],
+    "p_market_c01": ["market", 0.1]
+  },
+  "amount_loss": "positive_currency_squared_error_plus_h0_anchored_ridge",
+  "amount_bounds": [0.5, 1.5],
+  "minimum_positive_amount_orders": 40,
+  "minimum_probability_orders": 80,
+  "minimum_probability_class_orders": 20,
+  "minimum_creation_days": 5,
+  "standardized_clip": 3.0,
+  "probability_spline_degree": 2,
+  "probability_standardized_knots": [-3.0, 0.0, 3.0],
+  "bootstrap_block_days": [3, 7, 14],
+  "bootstrap_repeats": 2000,
+  "bootstrap_seed": 20261012,
+  "minimum_valid_repeats": 1900,
+  "risk_tolerance_vs_base": 1.02,
+  "combine_components": false
+}
