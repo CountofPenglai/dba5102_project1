@@ -25,8 +25,7 @@ from .fixed_blend_statistics import tables
 from .runtime import canonical_identity, write_tables
 from .h0_hourly_amount import market_features
 from .h0_state_fallback import market_states
-from .macro_multiplier import MacroMultiplier
-from .macro_multiplier_features import pool_features
+from .announcement_overlay import AnnouncementOverlay
 from .runtime import read_market_prefix
 from .runtime import run_destination, environment_snapshot
 from .runtime import atomic_json, file_digest
@@ -34,18 +33,19 @@ from .runtime import atomic_json, file_digest
 PROTOCOL = decay.PROTOCOL
 COMMON = ['day', 'month', 'side', 'tenor', 'quantity', 'tail_threshold', 'tail_source', 'origin']
 CORE = COMMON + ['model', 'prediction']
-STRENGTHS = {'announcement_l1': 1., 'announcement_l10': 10., 'announcement_l100': 100.}
+ANNOUNCEMENT_CONFIG = PROJECT/'config/announcement_overlay_v1.json'
+ANNOUNCEMENT_SETTINGS = json.loads(ANNOUNCEMENT_CONFIG.read_text())
+ANNOUNCEMENT_MODEL = ANNOUNCEMENT_SETTINGS['model']
 FIXED = {**coarse.FIXED, **fine.FINE}
 EXTRAS = ('h0_decay7', 'h0_decay14', *hourly.CANDIDATES,
-          'state_fallback', 'history_blend', 'state_history_blend', *coarse.DYNAMIC, *STRENGTHS)
+          'state_fallback', 'history_blend', 'state_history_blend', *coarse.DYNAMIC, ANNOUNCEMENT_MODEL)
 CATALOG = {**FIXED, **{m: (np.nan, np.nan) for m in EXTRAS}}
 PAIRS = [('h0', 'official_raw')] + [(c, r) for c in CATALOG if c not in ('official_raw', 'h0')
                                   for r in ('official_raw', 'h0')]
 PAIRS += [(c, fine.PREVIOUS_BEST) for c in fine.FINE if c != fine.PREVIOUS_BEST]
-SETTINGS = dict(version='report_unified_v2', protocol='config/validation_protocol_v3.json',
-    models=list(CATALOG), announcement_strengths=STRENGTHS,
-    announcement_history='same_30_day_created_and_settled_pool_as_H0',
-    announcement_support='unchanged_shared_5_events_30_orders_2_months_direction_8_60_3',
+SETTINGS = dict(version='report_unified_v3', protocol='config/validation_protocol_v3.json',
+    models=list(CATALOG), announcement=ANNOUNCEMENT_SETTINGS,
+    announcement_history='no_label_feedback_or_fitting_fixed_calendar_rule',
     new_official_validation='forbidden', adaptive_grid_expansion=False, monthly_oracle_selection=False,
     fresh_h0_fits=True, bootstrap_blocks=[3, 7, 14], bootstrap_repeats=2000,
     pairs=[list(p) for p in PAIRS], simultaneous_comparisons=len(PAIRS))
@@ -91,41 +91,55 @@ def score_predictions(pool, predicted, end):
 
 
 def predict_announcements(pool, calendar, reference, protocol=None):
-    """Keep the original announcement recipe, change only its lawful training clock/pool."""
+    """Apply the fixed rule at quote time; never access labels or settlement times."""
     protocol = PROTOCOL if protocol is None else protocol
     start, end = pd.Timestamp(protocol['validation_start']), pd.Timestamp(protocol['validation_end'])
-    created, closed = pool.metadata.created_at_utc, pool.metadata.closed_at_utc
+    created = pool.metadata.created_at_utc
     qids = pool.X.index[created.ge(start) & created.lt(end)]
     if (protocol['update_days'] != 7 or protocol['history_days'] != 30
             or start.tzinfo is None or end.tzinfo is None or not pd.Timestamp(protocol['training_start']) < start < end
-            or not pool.X.index.is_unique or not pool.X.index.equals(pool.y.index)
+            or not pool.X.index.is_unique
             or not pool.X.index.equals(pool.metadata.index) or not reference.index.is_unique
             or not reference.index.equals(qids) or not reference.model.eq('official_raw').all()):
         raise ValueError('Invalid common announcement cohort/protocol')
-    features = pool_features(pool, calendar)
-    frames, fits, cohorts = [], [], []
     for origin in pd.date_range(start, end, freq='7D', inclusive='left'):
         stop = min(origin+pd.Timedelta(days=7), end)
         q = qids[created.loc[qids].ge(origin) & created.loc[qids].lt(stop)]
         if not len(q): continue
         if not reference.loc[q, 'origin'].eq(origin.isoformat()).all():
             raise ValueError('Announcement reference uses a different update clock')
-        h = decay.history_ids(pool, origin, protocol)
-        if len(h) < 100: raise ValueError('Insufficient common historical pool')
-        base = pool.X.loc[q, BASE_FEATURE]
-        for name, strength in STRENGTHS.items():
-            model = MacroMultiplier(strength).fit(features.loc[h], pool.X.loc[h, BASE_FEATURE], pool.y.loc[h], origin)
-            diagnostics = model.predict_diagnostics(features.loc[q])
-            common = reference.loc[q, COMMON].copy()
-            frames.append(common.assign(model=name, prediction=base*diagnostics.multiplier,
-                **{c: diagnostics[c] for c in diagnostics}, event_id=features.loc[q, 'event_id'],
-                calendar_status=features.loc[q, 'calendar_status']))
-            fits.append(dict(model=name, **model.diagnostics()))
-        cohorts.append(dict(origin=origin.isoformat(), stop=stop.isoformat(), history_orders=len(h), query_orders=len(q),
-            earliest_training_create=created.loc[h].min().isoformat(), latest_training_close=closed.loc[h].max().isoformat(),
-            history_ids_sha256=hashlib.sha256('\n'.join(h.astype(str)).encode()).hexdigest()))
-    if not frames: raise ValueError('Empty announcement evaluation period')
-    return pd.concat(frames), fits, pd.DataFrame(cohorts)
+    if not len(qids): raise ValueError('Empty announcement evaluation period')
+    rule = AnnouncementOverlay(**{k: ANNOUNCEMENT_SETTINGS[k] for k in
+        ['per_event_cap', 'total_cap', 'pre_half_life_hours', 'post_minutes']})
+    quotes = pd.DataFrame(dict(created=created.loc[qids], option_type=pool.X.loc[qids, 'option_type']))
+    diagnostics, ledger = rule.predict_diagnostics(quotes, calendar)
+    result = reference[COMMON].assign(model=ANNOUNCEMENT_MODEL,
+        prediction=pool.X.loc[qids, BASE_FEATURE]*diagnostics.multiplier,
+        **{c: diagnostics[c] for c in diagnostics})
+    return result, dict(**ANNOUNCEMENT_SETTINGS, model_fit_calls=0), ledger
+
+
+def announcement_tables(predictions, ledger):
+    """Aggregate routing and known-event contributions; no per-order export."""
+    routing = []
+    for month in ['all', *sorted(predictions.month.unique())]:
+        selected = predictions if month == 'all' else predictions.loc[predictions.month.eq(month)]
+        for side in [-1, 0, 1]:
+            part = selected if side == -1 else selected.loc[selected.side.eq(side)]
+            for status, group in part.groupby('status'):
+                routing.append(dict(month=month, side=side, status=status, orders=len(group),
+                    changed_orders=int(group.multiplier.ne(1.).sum()),
+                    material_orders=int(group.adjustment.ge(.001).sum()),
+                    capped_orders=int(group.capped.sum()), mean_adjustment=group.adjustment.mean(),
+                    median_adjustment=group.adjustment.median(), maximum_adjustment=group.adjustment.max()))
+    events = []
+    if not ledger.empty:
+        ledger = ledger.assign(month=ledger.order_id.map(predictions.month), side=ledger.order_id.map(predictions.side))
+        for (month, side, family, event, phase), group in ledger.groupby(['month', 'side', 'family', 'event_id', 'phase']):
+            events.append(dict(month=month, side=side, family=family, event_id=event, phase=phase,
+                orders=len(group), material_orders=int(group.raw_adjustment.ge(.001).sum()),
+                mean_adjustment=group.applied_adjustment.mean(), maximum_adjustment=group.applied_adjustment.max()))
+    return dict(announcement_routing=pd.DataFrame(routing), announcement_events=pd.DataFrame(events))
 
 
 def predict_all(pool, market, calendar, protocol=None):
@@ -139,23 +153,19 @@ def predict_all(pool, market, calendar, protocol=None):
     print('Refitting coarse grid / causal dynamic weights; replaying fine grid from fresh parameters', flush=True)
     e, cs = coarse.predict_period(pool, protocol)
     f = fine.predict_period(pool, cs, protocol)
-    print('Refitting announcements with the same weekly 30-day history', flush=True)
-    g, af, cohorts = predict_announcements(pool, calendar, a.loc[a.model.eq('official_raw')], protocol)
+    print('Applying the fixed additive preannounced-event rule without fitting', flush=True)
+    g, af, ledger = predict_announcements(pool, calendar, a.loc[a.model.eq('official_raw')], protocol)
     merged = merge_predictions([a, b, c, e, f, g])
     if set(merged.model) != set(CATALOG): raise ValueError('Incomplete report recipe catalog')
-    support = []
-    for fit in af:
-        for scope, rows in fit['support'].items():
-            support.extend(dict(model=fit['model'], origin=fit['origin'], scope=scope, **row) for row in rows)
-    routing = []
-    for (month, model, side, reason), group in g.groupby(['month', 'model', 'side', 'fallback_reason']):
-        routing.append(dict(month=month, model=model, side=side, reason=reason, orders=len(group),
-            supported_orders=int(group.supported.sum()), changed_orders=int(group.multiplier.ne(1.).sum()),
-            event_count=group.loc[group.event_id.ne(''), 'event_id'].nunique(),
-            minimum_multiplier=group.multiplier.min(), maximum_multiplier=group.multiplier.max()))
+    cohorts = []
+    for origin, history in ds.items():
+        h = decay.history_ids(pool, pd.Timestamp(origin), protocol)
+        cohorts.append({**{k: history[k] for k in ['origin', 'stop', 'history_orders', 'query_orders',
+            'earliest_training_create', 'latest_training_close']},
+            'history_ids_sha256': hashlib.sha256('\n'.join(h.astype(str)).encode()).hexdigest()})
     states = dict(time_decay=ds, state_fallback=ss, hourly=hs, coarse=cs, announcement=af)
-    diagnostics = dict(weight_diagnostics=weights, announcement_support=pd.DataFrame(support),
-                       announcement_routing=pd.DataFrame(routing), training_cohorts=cohorts)
+    diagnostics = dict(weight_diagnostics=weights, **announcement_tables(g, ledger),
+                       training_cohorts=pd.DataFrame(cohorts))
     return merged, states, diagnostics
 
 
@@ -164,10 +174,12 @@ def compare_reference(summary, comparison):
     root = PROJECT/'docs/results/report_unified_v3_20261015_r2/validation'
     keys = ['month', 'model', 'group', 'value']
     columns = ['orders', 'rmse_per_btc', 'mae_per_btc', 'total_bias_usdc', 'gross_underprediction_usdc']
-    old = pd.read_csv(root/'summary.csv', dtype={'value': str}).set_index(keys)
+    old = pd.read_csv(root/'summary.csv', dtype={'value': str})
+    old = old.loc[old.model.isin(CATALOG)].set_index(keys)
     current = summary.set_index(keys).reindex(old.index)
     np.testing.assert_allclose(current[columns].to_numpy(float), old[columns].to_numpy(float), rtol=1e-10, atol=1e-7)
-    grid = pd.read_csv(root/'model_comparison.csv').set_index('model')
+    grid = pd.read_csv(root/'model_comparison.csv')
+    grid = grid.loc[grid.model.isin(CATALOG)].set_index('model')
     cols = ['macro_rmse_per_btc', 'macro_mae_per_btc', 'pooled_rmse_per_btc', 'pooled_mae_per_btc']
     new = comparison.set_index('model').loc[grid.index, cols]
     np.testing.assert_allclose(new, grid[cols], rtol=1e-10, atol=1e-7)
@@ -181,7 +193,8 @@ def run(run_id, data_dir, market_path):
     if json.loads(decay.PROTOCOL_PATH.read_text()) != PROTOCOL: raise ValueError('Protocol changed')
     for module in (decay, state, hourly, coarse, fine):
         if json.loads(module.CONFIG.read_text()) != module.SETTINGS: raise ValueError('Existing recipe configuration changed')
-    macro_settings = json.loads((PROJECT/'config/macro_multiplier_v1.json').read_text())
+    macro_settings = json.loads(ANNOUNCEMENT_CONFIG.read_text())
+    if macro_settings != ANNOUNCEMENT_SETTINGS: raise ValueError('Announcement rule changed')
     calendar_path = PROJECT/macro_settings['calendar']
     if file_digest(calendar_path) != macro_settings['calendar_sha256']: raise ValueError('Calendar evidence changed')
     guard = AccessGuard(); sys.addaudithook(guard.check)
@@ -226,7 +239,7 @@ def run(run_id, data_dir, market_path):
         fits = dict(h0_time_decay=len(states['time_decay'])*3,
                     h0_state=sum(s['h0_supported'] for s in states['state_fallback'].values()),
                     h0_hourly=len(states['hourly']), h0_coarse=sum(s['h0_supported'] for s in states['coarse'].values()),
-                    hourly_amount=len(states['hourly'])*3, announcement=len(states['announcement']))
+                    hourly_amount=len(states['hourly'])*3, announcement=0)
         manifest = dict(status='complete', producer=SETTINGS['version'], coverage=coverage, recipes=len(CATALOG),
             fits=fits, reference_results_reproduced=True, official_validation_open_attempts=guard.official_attempts,
             july_role='seen_rolling_validation',

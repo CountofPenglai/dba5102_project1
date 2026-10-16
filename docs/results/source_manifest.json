@@ -1,132 +1,158 @@
 {
-  "version": "report_results_only_v1",
-  "note": "Only current report evidence. Superseded exploration results are available in Git history at 7d66a5f.",
+  "version": "report_results_only_v2",
+  "current_run": "report_announcement_v1_20261016",
+  "report_models": [
+    "amount_gate",
+    "amount_joint",
+    "amount_level",
+    "base_announcement_overlay",
+    "blend_c040_p015",
+    "blend_c050_p025",
+    "dynamic14",
+    "dynamic30",
+    "h0",
+    "h0_decay14",
+    "h0_decay7",
+    "half_blend",
+    "history_blend",
+    "official_raw",
+    "state_fallback",
+    "state_history_blend"
+  ],
+  "previous_reference": "report_unified_v3_20261015_r2 retained only as immutable numerical regression evidence",
   "files": [
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/announcement_routing.csv",
-      "source_sha256": "7b82167f739781c78cf0c96162453831ff75d4fdf9eeb6570e04e8d98c4e52bc",
-      "saved": "report_unified_v3_20261015_r2/validation/announcement_routing.csv",
-      "saved_sha256": "7b82167f739781c78cf0c96162453831ff75d4fdf9eeb6570e04e8d98c4e52bc",
-      "rule": "report models only"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/model_comparison.csv",
+      "source_sha256": "023df42c8c96f3fa898c66c0f5137ed560014e3560c109456eae2f111fdc0fb2",
+      "saved": "report_announcement_v1_20261016/validation/model_comparison.csv",
+      "saved_sha256": "6eb8a49570a879f19a71e7aa16e1b20586c54e55251be47d44722e402de1870f",
+      "rule": "all rows"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/announcement_support.csv",
-      "source_sha256": "d75f92863249a90353becfeb301ff3b0f54db0c6fdc262e1b3285992b0229d7f",
-      "saved": "report_unified_v3_20261015_r2/validation/announcement_support.csv",
-      "saved_sha256": "d75f92863249a90353becfeb301ff3b0f54db0c6fdc262e1b3285992b0229d7f",
-      "rule": "report models only"
-    },
-    {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/comparisons.csv",
-      "source_sha256": "9d29b6456276cca448f0f6270126122ce64017113ea45283d8df3d0e848cf987",
-      "saved": "report_unified_v3_20261015_r2/validation/comparisons.csv",
-      "saved_sha256": "ab689c31e665a83affa339aa2f9ad738c84c75420029141dfb87043228b2c0fb",
-      "rule": "report models vs Base/H0"
-    },
-    {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/fixed_grid.csv",
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/fixed_grid.csv",
       "source_sha256": "009cd08e5e0ac348c28b06140c131c9709764012ab1810a2a9b59dc18ecaf4be",
-      "saved": "report_unified_v3_20261015_r2/validation/fixed_grid.csv",
-      "saved_sha256": "b67f16132e4c84900d0608811e927ec59690457ecdfb5d66a54f4ac6318bd976",
+      "saved": "report_announcement_v1_20261016/validation/fixed_grid.csv",
+      "saved_sha256": "5f4e363d1e2d14c1d391d33237a89a4ae7006c4c50c0b71fc3a524566ab773d1",
       "rule": "all rows"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/influence.csv",
-      "source_sha256": "653420f612ddc177862bdb4118f228051a3cc22094a675c98985bb8a3d9ccaf0",
-      "saved": "report_unified_v3_20261015_r2/validation/influence.csv",
-      "saved_sha256": "e1030085b6a2847af98f229901b07b0232be7176da9e6a8607e747ee02e80715",
-      "rule": "report models vs Base/H0, RMSE, delete-seven-day influence"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/summary.csv",
+      "source_sha256": "04e9eba4153ee75dc450542264c397889ff8a61eed40e253c1f2b6d449d8aed2",
+      "saved": "report_announcement_v1_20261016/validation/summary.csv",
+      "saved_sha256": "9116a7f9c07cd0795fb6bc44ff8dcb8e48b693b3f5911b32fa0d06f1df1a3121",
+      "rule": "16 representative report models"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/intervals.csv",
-      "source_sha256": "583c5f249f5e409413fca212fbf99ce937f161cf68376eeed4cf5ea54225f9c0",
-      "saved": "report_unified_v3_20261015_r2/validation/intervals.csv",
-      "saved_sha256": "a53d7eb27e7a9d223973c1c8d39fb7a06582684fa12c7e3433175be149d1b664",
-      "rule": "report models vs Base/H0, all scopes and 3/7/14-day blocks, RMSE/MAE"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/macro_monthly.csv",
+      "source_sha256": "cff95b61b293cfabfc9138db0b48bf57d2ec199dc797179b661e440584c0ed9e",
+      "saved": "report_announcement_v1_20261016/validation/macro_monthly.csv",
+      "saved_sha256": "543be9d6b87c96aa9d1ba5f3363ef446f74b64daae4046f504445eb2804f871c",
+      "rule": "16 representative report models"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/macro_monthly.csv",
-      "source_sha256": "be81c136decf94361784b4bd85e3e005f92907184aeb5654d82d7989bed0c5f2",
-      "saved": "report_unified_v3_20261015_r2/validation/macro_monthly.csv",
-      "saved_sha256": "ae74cc2097998639a0cbc6119a89f2bf96cbb84fdc95d7f3ab1e82115efa3e26",
-      "rule": "report models only"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/scoped_macro.csv",
+      "source_sha256": "53ffae346b4730f6001bc458fa7deedb3ed4a91d2dc2b4c755b04279c2a43d2f",
+      "saved": "report_announcement_v1_20261016/validation/scoped_macro.csv",
+      "saved_sha256": "390d06bcb5aefc65b4ff0ee17b7067b461935b883e89e9a461d703f8e6bd4c06",
+      "rule": "16 representative report models"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/model_comparison.csv",
-      "source_sha256": "fea6aba7d2586b376c32e1ed5b7bfef477753af3443daf967edd805ca2743722",
-      "saved": "report_unified_v3_20261015_r2/validation/model_comparison.csv",
-      "saved_sha256": "11354819934fefe1fff9f38db7a521235180a205794ce70ebf3a905ad0b6a1b4",
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/comparisons.csv",
+      "source_sha256": "454775a2e560ff6aca54343c5ec326f508db9574fdce029c812ea2b666659e14",
+      "saved": "report_announcement_v1_20261016/validation/comparisons.csv",
+      "saved_sha256": "85542da034dba6653b7ef18eae850dc86844c2ff2ec05166412a579012ad1295",
+      "rule": "report candidates versus Base/H0"
+    },
+    {
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/risk_constraints.csv",
+      "source_sha256": "d21171bf52359de0a0952971d18c7ae2106c75e9d87b4fbe4da30a411478209f",
+      "saved": "report_announcement_v1_20261016/validation/risk_constraints.csv",
+      "saved_sha256": "27e787524551d9eab6ba0c5b6697ab01d7bc1eb04b58c3f83fdc425d7931e946",
+      "rule": "report candidates versus Base/H0"
+    },
+    {
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/monthly_risk_constraints.csv",
+      "source_sha256": "6c5565a1aa13a2ebd84f149d4cf71c8ae5b59d1344ea0125613b2144412a1790",
+      "saved": "report_announcement_v1_20261016/validation/monthly_risk_constraints.csv",
+      "saved_sha256": "83b3c1bd35e460d21f787e3fc00840f8d28718ce3a9b797b6dfb5cd29d345c9e",
+      "rule": "report candidates versus Base/H0"
+    },
+    {
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/direction_tenor.csv",
+      "source_sha256": "d0f3c7d6200a49b9ec324dab9a94252b4cb2b9b62d0f9e1fa984ea152bd2df78",
+      "saved": "report_announcement_v1_20261016/validation/direction_tenor.csv",
+      "saved_sha256": "a77afc1b84d7bd3740fb4741c6e99f9f154bcfd85c6c3001f91eab8776e92917",
+      "rule": "16 representative report models"
+    },
+    {
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/intervals.csv",
+      "source_sha256": "0955842d34053d86d5e41ff2603550f87bbb5b0e4309ade1a55b68bd369ecc78",
+      "saved": "report_announcement_v1_20261016/validation/intervals.csv",
+      "saved_sha256": "bf89248aa2fdcf7104bbfa8992a4baec6aebb0464d23675209ac570eb9e2ee78",
+      "rule": "report candidates versus Base/H0; RMSE/MAE; all 3/7/14-day blocks"
+    },
+    {
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/influence.csv",
+      "source_sha256": "ffd173f06bc3f554078c655bcc65d477ae395a505a6fbb29bb2f09e769767c72",
+      "saved": "report_announcement_v1_20261016/validation/influence.csv",
+      "saved_sha256": "21ec1da117f158231a5ebc06505dcb63fb8e8a1a43b465a224ac7ea60dfe6c90",
+      "rule": "report candidates versus Base/H0; delete-seven-day RMSE"
+    },
+    {
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/announcement_routing.csv",
+      "source_sha256": "79b94ebdaf00041b0d3f7a450a32c27eb8191c19bb1f623426a5a7621209163e",
+      "saved": "report_announcement_v1_20261016/validation/announcement_routing.csv",
+      "saved_sha256": "48de1793d59c5d08f0c032659aa0f8ea15f86dba6a8b0a2a0312a702e4999ba6",
       "rule": "all rows"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/monthly_risk_constraints.csv",
-      "source_sha256": "d4cc0d1e37363afff3b6081aac353c302c0ea9d1d800e2422d40778f94d83716",
-      "saved": "report_unified_v3_20261015_r2/validation/monthly_risk_constraints.csv",
-      "saved_sha256": "81405429abf5bfddf39c75781402c32f1f20eb8db7d91fc1b436472161d86e5a",
-      "rule": "report models vs Base/H0"
-    },
-    {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/reference_checks.csv",
-      "source_sha256": "eea613b39685ed872b04ba6ba8636181793656447d250406926a53d18d78c2f7",
-      "saved": "report_unified_v3_20261015_r2/validation/reference_checks.csv",
-      "saved_sha256": "eea613b39685ed872b04ba6ba8636181793656447d250406926a53d18d78c2f7",
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/announcement_events.csv",
+      "source_sha256": "3308b3adf707aa3250f3472614c7e790e4e43f4f31cf8668b21f0cc893a5fc47",
+      "saved": "report_announcement_v1_20261016/validation/announcement_events.csv",
+      "saved_sha256": "a68144e7da2a695dcc605f8b21ff68f471ec6c2a61bdc528606837ad1f3171f8",
       "rule": "all rows"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/risk_constraints.csv",
-      "source_sha256": "30edc478e7edb54a6963ebb238be3050cb1b47aa7875e58969110b05c5887bdf",
-      "saved": "report_unified_v3_20261015_r2/validation/risk_constraints.csv",
-      "saved_sha256": "3d67054a696bcceb40ed2a63fa7ce7181a9eda6bb514e2f8e99745735075d8d6",
-      "rule": "report models vs Base/H0"
-    },
-    {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/scoped_macro.csv",
-      "source_sha256": "103d6b9dacabfed93e2eb42a1888e768656a1d1d78ef5a0f01730855b07310b5",
-      "saved": "report_unified_v3_20261015_r2/validation/scoped_macro.csv",
-      "saved_sha256": "a016ac67654a526fe0bf361850e2b844a412fb74b234f7b6c1959b737fc11eda",
-      "rule": "report models only"
-    },
-    {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/summary.csv",
-      "source_sha256": "b5c4bebb3935fb055e1742f2b9604f0f6c4ef474f12004407ee7096cd2f43590",
-      "saved": "report_unified_v3_20261015_r2/validation/summary.csv",
-      "saved_sha256": "534b5cb3d70bffa40ebafe2b78110dc4f53aafd163f553863f2a3d0dc0fa1882",
-      "rule": "report models only"
-    },
-    {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/metrics/validation/training_cohorts.csv",
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/training_cohorts.csv",
       "source_sha256": "128db3028aa2c2b76c240688f59827f702e3c6cbd73fc4f8338c11f521441533",
-      "saved": "report_unified_v3_20261015_r2/validation/training_cohorts.csv",
+      "saved": "report_announcement_v1_20261016/validation/training_cohorts.csv",
       "saved_sha256": "128db3028aa2c2b76c240688f59827f702e3c6cbd73fc4f8338c11f521441533",
       "rule": "all rows"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/provenance/manifest.json",
-      "source_sha256": "4c2744d38d9615bf28819834afa66ceb802b53faad52b31c7fd94fcc164dfd35",
-      "saved": "report_unified_v3_20261015_r2/manifest.json",
-      "saved_sha256": "4c2744d38d9615bf28819834afa66ceb802b53faad52b31c7fd94fcc164dfd35",
-      "rule": "byte-identical aggregate/provenance copy"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/metrics/validation/reference_checks.csv",
+      "source_sha256": "112e63fd2e6c5ee1a17e391c9b1a1c645da5316af993e0b39b49112c5ec2b96e",
+      "saved": "report_announcement_v1_20261016/validation/reference_checks.csv",
+      "saved_sha256": "112e63fd2e6c5ee1a17e391c9b1a1c645da5316af993e0b39b49112c5ec2b96e",
+      "rule": "all rows"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/provenance/independent_verification.json",
-      "source_sha256": "669073a38c6ec297c6d29b6a2efa96df18fa7dbb9098ae8844819adcca24c962",
-      "saved": "report_unified_v3_20261015_r2/independent_verification.json",
-      "saved_sha256": "669073a38c6ec297c6d29b6a2efa96df18fa7dbb9098ae8844819adcca24c962",
-      "rule": "byte-identical aggregate/provenance copy"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/provenance/manifest.json",
+      "source_sha256": "d44374ece4d88f1ecbaac4540ec5b8db857b06be575733d7f4fe15571a70a96a",
+      "saved": "report_announcement_v1_20261016/manifest.json",
+      "saved_sha256": "d44374ece4d88f1ecbaac4540ec5b8db857b06be575733d7f4fe15571a70a96a",
+      "rule": "byte-identical provenance"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/provenance/protocol.json",
-      "source_sha256": "5413b4df285585e6e25c71116a9ebe425a8c4be21ad1c38992e9bb87b4594fba",
-      "saved": "report_unified_v3_20261015_r2/protocol.json",
-      "saved_sha256": "5413b4df285585e6e25c71116a9ebe425a8c4be21ad1c38992e9bb87b4594fba",
-      "rule": "byte-identical aggregate/provenance copy"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/provenance/config.json",
+      "source_sha256": "593d41be85035af4baa8607bb2f25df17ea1a154635354b27fe8c4a19252a061",
+      "saved": "report_announcement_v1_20261016/config.json",
+      "saved_sha256": "593d41be85035af4baa8607bb2f25df17ea1a154635354b27fe8c4a19252a061",
+      "rule": "byte-identical provenance"
     },
     {
-      "source": "outputs/model_studies/report_unified_v3_20261015_r2/provenance/config.json",
-      "source_sha256": "c9393341ec922c061c293d4e9f813196113cf03fcc7444c6115e1bd6b58ab2bc",
-      "saved": "report_unified_v3_20261015_r2/config.json",
-      "saved_sha256": "c9393341ec922c061c293d4e9f813196113cf03fcc7444c6115e1bd6b58ab2bc",
-      "rule": "byte-identical aggregate/provenance copy"
+      "source": "outputs/model_studies/report_announcement_v1_20261016/provenance/protocol.json",
+      "source_sha256": "eccab337e908767ece70703cc1157e74dcf71dac367f5a4bc6a2b428f12427ac",
+      "saved": "report_announcement_v1_20261016/protocol.json",
+      "saved_sha256": "eccab337e908767ece70703cc1157e74dcf71dac367f5a4bc6a2b428f12427ac",
+      "rule": "byte-identical provenance"
+    },
+    {
+      "source": "outputs/model_studies/report_announcement_v1_20261016/provenance/independent_verification.json",
+      "source_sha256": "54bd04a877109932c1ae81f378ff3cf3fdce21b8fbe01b32cb8e355b01425d1a",
+      "saved": "report_announcement_v1_20261016/independent_verification.json",
+      "saved_sha256": "54bd04a877109932c1ae81f378ff3cf3fdce21b8fbe01b32cb8e355b01425d1a",
+      "rule": "byte-identical provenance"
     }
   ]
 }

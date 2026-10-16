@@ -1,0 +1,18 @@
+{
+  "version": "announcement_overlay_v1",
+  "model": "base_announcement_overlay",
+  "per_event_cap": 0.01,
+  "total_cap": 0.05,
+  "pre_half_life_hours": 24.0,
+  "post_minutes": 60.0,
+  "aggregation": "sum_independent_events_then_cap",
+  "fomc": "maximum_of_known_statement_and_press_anchors_as_one_event",
+  "knowledge": "known_by_at_or_before_quote_and_strictly_before_release",
+  "exposure": "quote_time_calendar_overlay_not_contract_crossing",
+  "directions": "same_fixed_rule",
+  "parameter_search": false,
+  "calendar": "external_data/macro_events/snapshots/20261014T123002Z.json",
+  "calendar_sha256": "98fea317fa4dac0efdebd64a2d5780bf823ef1660d97daa2f86aedaaad5cf3f9",
+  "protocol": "config/validation_protocol_v3.json",
+  "official_validation": "forbidden"
+}

@@ -19,12 +19,35 @@ from pp_data.features import BASE_FEATURE
 from pp_models.runtime import AccessGuard
 from pp_data.io import load_dataset
 from pp_data.io import canonical_identity
-from pp_models.macro_multiplier_features import BASIS
-from pp_models.macro_multiplier_features import pool_features
 from pp_models.runtime import atomic_json, file_digest
 from pp_models.verification import metrics
 from pp_models.verification import h0_values
 from pp_models.verification import quadratic_check
+
+
+def announcement_values(created, calendar, rule):
+    """Independent vectorized replay: available anchors, event maxima, capped sum."""
+    at = pd.DatetimeIndex(created)
+    per_event = {}
+    for row in calendar['events']:
+        if row.get('known_by_utc') is None: continue
+        release, known = pd.Timestamp(row['event_time_utc']), pd.Timestamp(row['known_by_utc'])
+        if known >= release: continue
+        key = ('US_FOMC_'+release.tz_convert('America/New_York').strftime('%Y-%m-%d')
+               if row['family'] == 'FOMC' else row['event_id'])
+        seconds = (at-release).total_seconds().to_numpy()
+        value = np.zeros(len(at)); before = seconds < 0
+        value[before] = 2.**(seconds[before]/(3600*rule['pre_half_life_hours']))
+        value[~before] = np.maximum(0., 1-seconds[~before]/(60*rule['post_minutes']))
+        value[at < known] = 0.
+        per_event[key] = np.maximum(per_event.get(key, np.zeros(len(at))), value)
+    adjustment = np.minimum(rule['total_cap'], sum(per_event.values(), np.zeros(len(at)))*rule['per_event_cap'])
+    for coverage in calendar['coverage'].values():
+        lower = pd.Timestamp(coverage['start'], tz='America/New_York')
+        upper = pd.Timestamp(coverage['end_exclusive'], tz='America/New_York')
+        outside = (at-pd.Timedelta(minutes=rule['post_minutes']) < lower) | (at+pd.Timedelta(microseconds=1) > upper)
+        adjustment[outside] = 0.
+    return pd.Series(1+adjustment, index=created.index)
 
 
 def check_daily(summary, daily, macro):
@@ -55,7 +78,7 @@ def verify(root):
     read = lambda name: json.loads((root/'provenance'/name).read_text())
     manifest, pre, protocol, states = (read(name) for name in
         ['manifest.json', 'preflight.json', 'protocol.json', 'parameters.json'])
-    assert manifest['producer'] == 'report_unified_v2', 'Use the archived commit to verify an earlier storage format'
+    assert manifest['producer'] == 'report_unified_v3', 'Use the archived source to verify an earlier producer'
     assert manifest['status'] == 'complete' and manifest['official_validation_open_attempts'] == 0
     for name, digest in manifest['artifacts'].items(): assert file_digest(root/name) == digest, name
     with ZipFile(root/'provenance/source.zip') as archive:
@@ -95,10 +118,15 @@ def verify(root):
             risk_rows += 1
     grid = pd.read_csv(folder/'fixed_grid.csv')
     fixed = {r.model: (r.call_h0_weight, r.put_h0_weight) for r in grid.itertuples()}
-    calendar = json.loads((PROJECT/'external_data/macro_events/snapshots/20261014T123002Z.json').read_text())
-    features = pool_features(pool, calendar)
+    rule = states['announcement']
+    assert rule['model_fit_calls'] == manifest['fits']['announcement'] == 0
+    with ZipFile(root/'provenance/source.zip') as archive:
+        calendar_bytes = archive.read(rule['calendar'])
+    assert hashlib.sha256(calendar_bytes).hexdigest() == rule['calendar_sha256']
+    calendar = json.loads(calendar_bytes)
+    multipliers = announcement_values(created, calendar, rule)
     cohorts = pd.read_csv(folder/'training_cohorts.csv').set_index('origin')
-    frames = []; origins = []; support_checks = 0
+    frames = []; origins = []; announcement_checks = 0
     for origin in pd.date_range(start, end, freq='7D', inclusive='left'):
         stop = min(end, origin+pd.Timedelta(days=7)); key = origin.isoformat()
         queries = pool.X.index[created.ge(origin) & created.lt(stop)]
@@ -121,29 +149,9 @@ def verify(root):
         p, s = h0_values(x, h0); bp = x[BASE_FEATURE].to_numpy()
         predicted = {name: (np.where(x.option_type.eq(0), ca, pa)*(p*s-bp)+bp)
                      for name, (ca, pa) in fixed.items()}
-        for fit in [f for f in states['announcement'] if f['origin'] == key]:
-            f = features.loc[h]
-            f = f.loc[f.calendar_status.eq('known_event') & f.event_time.lt(origin) & f[BASIS].gt(0).any(axis=1)]
-            assert fit['training_orders'] == len(f) and fit['training_events'] == f.event_id.nunique()
-            for scope, minimum in [('shared', (30, 5, 2)), ('call', (60, 8, 3)), ('put', (60, 8, 3))]:
-                g = f if scope == 'shared' else f.loc[f.option_type.eq(0 if scope == 'call' else 1)]
-                for i, b in enumerate(BASIS):
-                    z = g.loc[g[b].gt(0)]; counts = [len(z), z.event_id.nunique(), z.event_month.nunique()]
-                    expected = dict(basis=b, orders=counts[0], events=counts[1], months=counts[2],
-                                    enabled=all(a >= c for a, c in zip(counts, minimum)))
-                    assert fit['support'][scope][i] == expected
-                    enabled = expected['enabled'] and (scope == 'shared' or fit['shared_enabled'][i])
-                    actual = fit['shared_enabled'][i] if scope == 'shared' else fit['direction_enabled'][0 if scope == 'call' else 1][i]
-                    assert enabled == actual
-                    if not enabled:
-                        assert fit['coefficients'][i+(0 if scope == 'shared' else 3 if scope == 'call' else 6)] == 0
-                    support_checks += 1
-            fq = features.loc[q]; v = fq[BASIS].to_numpy()
-            design = np.column_stack([v*fit['shared_enabled'],
-                *[v*fit['direction_enabled'][side]*fq.option_type.eq(side).to_numpy()[:, None] for side in (0, 1)]])
-            delta = design@np.array(fit['coefficients'])
-            assert np.abs(delta).max() <= .05+1e-10
-            predicted[fit['model']] = bp*(1+np.clip(delta, -.05, .05))
+        assert multipliers.loc[q].between(1., 1+rule['total_cap']).all()
+        predicted[rule['model']] = bp*multipliers.loc[q].to_numpy()
+        announcement_checks += len(q)
         threshold = pd.Series(index=q, dtype=float)
         for month in created.loc[q].dt.strftime('%Y-%m').unique():
             mo = pd.Timestamp(month+'-01', tz='UTC'); mq = q[created.loc[q].dt.strftime('%Y-%m').eq(month)]
@@ -172,11 +180,12 @@ def verify(root):
         replay_rows += 1
     pooled = summary.loc[summary.month.eq('all') & summary.group.eq('overall')].set_index('model')
     quadratic = quadratic_check(root, fixed, macro.set_index('model'), pooled)
-    refs = pd.read_csv(folder/'reference_checks.csv'); assert refs.reproduced.all() and len(refs) == 1 and refs.models.eq(99).all()
+    refs = pd.read_csv(folder/'reference_checks.csv')
+    assert refs.reproduced.all() and len(refs) == 1 and refs.models.eq(len(macro)-1).all()
     out = dict(status='passed', weekly_cohorts=len(origins), models_daily_checked=len(macro),
         daily_aggregate_rows_checked=count, independently_replayed_models=len(replay_names),
         independently_replayed_summary_rows=replay_rows, quadratic_rmse_models_checked=quadratic,
-        announcement_support_cells_checked=support_checks, risk_rows_checked=risk_rows, model_fit_calls=0,
+        announcement_orders_independently_replayed=announcement_checks, risk_rows_checked=risk_rows, model_fit_calls=0,
         official_validation_open_attempts=guard.official_attempts,
         scope='hashes, causal cohorts, H0 parameter identity, all daily moments, fixed and announcement replay; uncertainty uses existing tested statistics implementation')
     atomic_json(root/'provenance/independent_verification.json', out)

@@ -7,7 +7,7 @@ from pp_data.io import ModelData
 from pp_data.features import BASE_FEATURE
 from pp_models.h0_time_decay_study import PROTOCOL, predict_period
 from test_h0_time_decay import fixture
-from test_macro_multiplier import calendar
+from test_announcement_overlay import calendar
 
 
 class UnifiedReportTests(unittest.TestCase):
@@ -24,31 +24,26 @@ class UnifiedReportTests(unittest.TestCase):
         self.calendar['events'] = [{**template, 'event_id': str(i), 'event_time_utc': t.isoformat()}
             for i, t in enumerate(pd.date_range('2026-03-02T12:15Z', '2026-07-09T12:15Z', freq='2D'))]
 
-    def test_macro_week_freeze_then_legal_settled_feedback(self):
+    def test_announcement_rule_is_independent_of_all_labels_and_settlement(self):
         a, _, _ = self.study.predict_announcements(self.pool, self.calendar, self.reference, self.protocol)
         changed = self.pool.y.copy()
-        created = self.pool.metadata.created_at_utc
-        changed.loc[created.ge('2026-05-01') & created.lt('2026-05-08')] = 100000.
-        p = ModelData(self.pool.X, changed, self.pool.metadata)
+        changed[:] = 100000.
+        meta = self.pool.metadata.copy(); meta['closed_at_utc'] = pd.NaT
+        p = ModelData(self.pool.X, changed, meta)
         b, _, _ = self.study.predict_announcements(p, self.calendar, self.reference, self.protocol)
-        first = a.origin.eq('2026-05-01T00:00:00+00:00')
-        pd.testing.assert_frame_equal(a.loc[first], b.loc[first])
-        second = a.origin.eq('2026-05-08T00:00:00+00:00')
-        self.assertTrue(a.loc[second, 'supported'].any())
-        self.assertFalse(np.allclose(a.loc[second, 'prediction'], b.loc[second, 'prediction']))
+        pd.testing.assert_frame_equal(a, b)
+        self.assertTrue(a.multiplier.gt(1).any())
+        self.assertTrue(a.multiplier.le(1.05).all())
         self.assertNotIn('actual', a)
 
-    def test_macro_ignores_pre_april_future_and_unsettled_targets(self):
-        p = self.pool
-        mask = p.metadata.created_at_utc.ge('2026-04-29')
-        p.metadata.loc[mask, 'closed_at_utc'] = pd.Timestamp('2026-08-01', tz='UTC')
-        a, sa, ca = self.study.predict_announcements(p, self.calendar, self.reference, self.protocol)
-        p.y.loc[mask | p.metadata.created_at_utc.lt('2026-04-01')] = 1e10
-        b, sb, cb = self.study.predict_announcements(p, self.calendar, self.reference, self.protocol)
-        pd.testing.assert_frame_equal(a, b)
-        self.assertEqual(sa, sb)
-        pd.testing.assert_frame_equal(ca, cb)
-        self.assertTrue((pd.to_datetime(ca.latest_training_close) < pd.to_datetime(ca.origin)).all())
+    def test_announcement_reacts_inside_week_only_after_evidence_is_known(self):
+        c = calendar(); c['events'][0]['known_by_utc'] = '2026-05-05T00:00Z'
+        a, rules, ledger = self.study.predict_announcements(self.pool, c, self.reference, self.protocol)
+        at = self.pool.metadata.created_at_utc.reindex(a.index)
+        np.testing.assert_array_equal(a.loc[at.lt('2026-05-05'), 'multiplier'], 1.)
+        self.assertTrue(a.loc[at.ge('2026-05-05') & at.lt('2026-05-08'), 'multiplier'].gt(1).all())
+        self.assertEqual(rules['model_fit_calls'], 0)
+        self.assertTrue((pd.to_datetime(ledger.known_by_utc) <= pd.to_datetime(ledger.quote_time)).all())
 
     def test_missing_query_settlement_is_not_a_prediction_input(self):
         p = self.pool; protocol = {**self.protocol, 'validation_end': '2026-05-08T00:00:00Z'}
@@ -58,16 +53,16 @@ class UnifiedReportTests(unittest.TestCase):
         b, _, _ = self.study.predict_announcements(ModelData(p.X, p.y, meta), self.calendar, ref, protocol)
         pd.testing.assert_frame_equal(a, b)
 
-    def test_macro_preserves_cross_month_week_and_support_fallback(self):
+    def test_announcement_preserves_cohort_and_week_context_without_support_gate(self):
         p = self.pool; protocol = {**PROTOCOL, 'validation_end': '2026-07-10T00:00:00Z'}
         ref = predict_period(p, protocol)[0].query("model == 'official_raw'")
-        a, fits, cohorts = self.study.predict_announcements(p, calendar(), ref, protocol)
+        a, rules, ledger = self.study.predict_announcements(p, calendar(), ref, protocol)
         july = a.loc[a.day.ge('2026-07-01') & a.day.lt('2026-07-03')]
         self.assertEqual(set(july.origin), {'2026-06-26T00:00:00+00:00'})
-        np.testing.assert_array_equal(a.multiplier, 1.)
-        self.assertTrue(cohorts.earliest_training_create.ge('2026-04-01T00:00:00+00:00').all())
-        self.assertFalse(any(any(f['shared_enabled']) for f in fits))
-        self.assertEqual(set(a.model), {'announcement_l1', 'announcement_l10', 'announcement_l100'})
+        np.testing.assert_array_equal(july.multiplier, 1.)
+        self.assertEqual(set(a.model), {'base_announcement_overlay'})
+        self.assertTrue(a.multiplier.gt(1).any())
+        self.assertEqual(len(a), len(ref))
 
     def test_combine_deduplicates_agreeing_references_and_rejects_missing_orders(self):
         a = self.reference.copy(); b = a.assign(model='candidate', prediction=a.prediction*.9)
