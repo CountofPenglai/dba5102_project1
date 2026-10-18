@@ -4,6 +4,7 @@ import pandas as pd
 from .h0_state_fallback import history_weight
 
 GRID = (0., .25, .5, .75, 1.)
+# Each pair stores H0 weights in (Call, Put) order; Base receives 1-alpha.
 FIXED = {}
 for call in GRID:
     for put in GRID:
@@ -28,7 +29,9 @@ def grid_weight(past, origin, history_days):
         d = recent.h0.to_numpy()-recent.base.to_numpy()
         errors = recent.base.to_numpy()[:, None]+d[:, None]*np.asarray(GRID)-recent.actual.to_numpy()[:, None]
         mse = np.mean(errors**2, axis=0)
+        # Match the continuous history-weight objective on the fixed candidate grid.
         penalized = mse+par['penalty']/len(recent)*(np.asarray(GRID)-.5)**2
+        # GRID is ascending, so an exact tie selects the smaller H0 weight.
         par.update(alpha=float(GRID[int(np.argmin(penalized))]), grid_mse=mse.tolist(),
                    grid_penalized_mse=penalized.tolist())
     return par

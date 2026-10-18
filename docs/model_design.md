@@ -1,6 +1,8 @@
 # 报告模型与公共组件
 
-当前只保留解释H0与Base有限混合研究路径所需的97个配置。Base保持官方提供值，所有模型共用[验证协议v3](validation_protocol_v3.md)、报价队列和评分。单项模块仅提供配方，唯一执行入口是`python -m pp_models`。
+当前只保留解释H0与Base有限混合研究路径所需的97个配置。Base保持官方提供值，所有模型共用[验证协议v3](validation_protocol_v3.md)、报价队列和评分。单项模块仅提供配方，统一研究复现入口是`python -m pp_models`。最终模型的独立预测入口为`python -m pp_pricing`，见[交付接口](final_model_interface.md)。
+
+交付包包含报告最后一次周更（2026-07-31零时）的既有H0参数，以及Call40%／Put15%的固定混合；无标签环境不自动更新模型。它不包含公告等探索叠加，也不等同于报告中每7日获得已结算标签后的完整滚动流程。
 
 ## H0两阶段核心
 
@@ -27,8 +29,12 @@ Call、Put分别估计正赔付概率p和正赔付金额系数s，输出`H0 = p 
 
 | 模块 | 单一职责 |
 |---|---|
+| `pp_pricing` | 最终混合的冻结预测API/CLI、官方字段适配与JSON参数；不加载训练框架 |
+| `pricing_inputs.py` | H0训练和交付推理共享的6字段契约、检查与3项概率特征变换 |
 | `pp_data` | 质量、特征白名单、平面数据存储与验证；不含旧日期分区接口 |
-| `h0.py`、`validation.py` | H0拟合与参数序列化；统一历史、尾部上下文 |
+| `pp_data.splitting` | 唯一滚动时间窗、查询订单和已结算训练历史；公告使用不读标签的查询窗口 |
+| `training.py`、`h0.py` | 运行内共享H0训练与参数序列化；同周同半衰期只拟合一次 |
+| `validation.py`、`forecast_history.py` | 统一月初尾部评价上下文；严格已结算的前向误差缓存 |
 | `metrics.py`、`resampling.py`、`fixed_blend_statistics.py` | 误差和现金口径、成对损失、按月块重采样、共同结果表 |
 | `runtime.py` | 输出路径保护、旧行情前缀、官方验证访问防护、来源与环境记录 |
 | `report_unified_study.py` | 运行97配方、验证共同队列、统一评分、与报告冻结统计对照 |
@@ -37,10 +43,12 @@ Call、Put分别估计正赔付概率p和正赔付金额系数s，输出`H0 = p 
 
 已移除GAM/EBM、旧GBDT分类、静态分布、合同残差、早期两阶段分支及其旧结果和CLI；仍有用的H0、评分、重采样、市场读取等逻辑已抽为上述公共组件。源码快照包含审计、数据、模型、公告、配置、测试和核验工具。
 
+2026-10-18进一步统一了各研究分支的时间划分与H0训练调用。各`predict_period`仍可独立使用，统一运行时显式共享训练会话。接口与时间约束见[训练架构](training_architecture.md)；独立核验器保留单独的算术重放，不与训练实现共用验证公式。
+
 ## 复现与后续边界
 
 当前生产者为`report_unified_v3`，数据为flat v2、日期协议仍为v3。统一入口重新运行97个配置，对96个未改模型与上一轮冻结统计作回归比较；新公告规则是本轮唯一新增行为。目录存在即拒绝覆盖，输入、源码、配置、日历与参数均留档。
 
-当前报告来源为`report_announcement_v1_20261016`，旧结果`report_unified_v3_20261015_r2`仅作回归参照。历史实现及核验器按Git/源码快照追溯，不能拿当前核验器验证旧生产者。新公告规则的实现见[announcement_overlay.py](../pp_models/announcement_overlay.py)，设置见[配置](../config/announcement_overlay_v1.json)。
+当前报告来源为`report_announcement_v1_20261016`，旧结果`report_unified_v3_20261015_r2`仅保留两张回归参照表，已移除停用公告记录及旧配置快照。历史实现及核验器按Git追溯，不能拿当前核验器验证旧生产者。新公告规则的实现见[announcement_overlay.py](../pp_models/announcement_overlay.py)，设置见[配置](../config/announcement_overlay_v1.json)。
 
 公告是报价时刻上的加成，不再使用合同跨公告或剩余暴露积分；因此短合同即使在发布前已到期，也可能有很小的预告期加成。这是当前规则的明确假设。known_by不是首次通知时刻；缺证据、未预告与日历覆盖外都不能当成已确认无风险事件。

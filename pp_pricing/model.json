@@ -1,0 +1,71 @@
+{
+  "alpha": {
+    "0": 0.4,
+    "1": 0.15
+  },
+  "fitted_at": "2026-07-31T00:00:00+00:00",
+  "input_columns": [
+    "option_type",
+    "api_base_price_per_btc_usdc",
+    "remaining_seconds",
+    "product_duration_seconds",
+    "realized_vol_60m",
+    "log_moneyness"
+  ],
+  "model": "blend_c040_p015",
+  "parameters": {
+    "0": {
+      "coef": [
+        0.3643911243881236,
+        -0.27796202050889157,
+        0.31932179040557046
+      ],
+      "intercept": 0.10622871919250802,
+      "mean": [
+        4.873847043755149,
+        8.984833727183652,
+        -0.02851326364691373
+      ],
+      "probability": 0.5304822565969063,
+      "scale": [
+        0.575298728323609,
+        1.1355162527265446,
+        0.18906584290789244
+      ],
+      "severity": 2.0917263061849334
+    },
+    "1": {
+      "coef": [
+        -0.4582445121517825,
+        0.3226126635467751,
+        0.7614911860852209
+      ],
+      "intercept": -0.39909291417274206,
+      "mean": [
+        4.914928034519099,
+        9.07105302455905,
+        -0.05853190089405763
+      ],
+      "probability": 0.41957364341085274,
+      "scale": [
+        0.5652006410212854,
+        1.1230105870807823,
+        0.34575289659880865
+      ],
+      "severity": 2.1079701916452946
+    }
+  },
+  "provenance": {
+    "earliest_training_create": "2026-07-01T00:24:53+00:00",
+    "export_refit": false,
+    "history_days": 30,
+    "history_orders": 2131,
+    "label_feedback_at_inference": false,
+    "latest_training_close": "2026-07-30T23:51:36+00:00",
+    "note": "Last existing weekly state; not an all-data refit. Frozen inference is not the rolling backtest.",
+    "original_update_days": 7,
+    "parameters_sha256": "13bbb8ef65c0c5402051bdc7eba5dbcc66de5fc57988925f74939057d320d2fb",
+    "source_run": "report_announcement_v1_20261016"
+  },
+  "schema_version": "h0_base_blend_v1"
+}

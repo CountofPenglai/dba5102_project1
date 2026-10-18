@@ -89,6 +89,39 @@ def legacy_pool(root, prepared):
 
 
 class FlatDataTests(unittest.TestCase):
+    def test_migration_preserves_mixed_timestamp_precision(self):
+        from scripts.migrate_report_data import migrate_report_data
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp); source = write_inputs(root)
+            path = source / 'pp_transactions_training.csv'
+            raw = pd.read_csv(path)
+            for name in ('createdAt', 'closedAt', 'expirationDate'):
+                raw.loc[0, name] = (pd.Timestamp(raw.loc[0, name]) + pd.Timedelta(milliseconds=1)).isoformat()
+            raw.to_csv(path, index=False)
+            prepared = io.build_dataset(source, root / 'original')
+            migrate_report_data(legacy_pool(root / 'legacy', prepared), root / 'migrated')
+            loaded = io.load_dataset(root / 'migrated', cohort='risk')
+            self.assertEqual(len(loaded.X), 4)
+            self.assertEqual(loaded.metadata.created_at_utc.iloc[0], pd.Timestamp('2026-03-15T12:00:00.001Z'))
+            pd.testing.assert_series_equal(loaded.y, io.load_dataset(root / 'original', cohort='risk').y)
+
+    def test_migration_and_loading_reject_inconsistent_payout_units(self):
+        from scripts.migrate_report_data import migrate_report_data
+        for kind, column, value in [('features', 'quantity_btc', -1.),
+                                    ('features', 'quantity_btc', 0.),
+                                    ('targets', 'payout_per_btc_usdc', 999999.)]:
+            with self.subTest(column=column, value=value), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                prepared = io.build_dataset(write_inputs(root), root / 'original')
+                getattr(prepared, kind).loc[0, column] = value
+                legacy = legacy_pool(root / 'legacy', prepared)
+                with self.assertRaises(ValueError):
+                    migrate_report_data(legacy, root / 'migrated')
+                self.assertFalse((root / 'migrated').exists())
+                alter_table(root / 'original', kind, lambda t: t.loc.__setitem__((0, column), value))
+                with self.assertRaises(ValueError):
+                    io.load_dataset(root / 'original')
+
     def require_flat_loader(self):
         self.assertTrue(callable(getattr(io, "load_dataset", None)),
                         "Flat dataset loading must replace split selection")

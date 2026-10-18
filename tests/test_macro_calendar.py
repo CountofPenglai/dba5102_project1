@@ -46,6 +46,30 @@ class MacroCalendarTests(unittest.TestCase):
             with self.assertRaises(FileExistsError): publish_calendar(b, Path(d))
             self.assertEqual(original, (Path(d) / 'calendar.json').read_bytes())
 
+    def test_invalid_event_schema_is_rejected_before_publication(self):
+        for field, value in [('kind', None), ('kind', 'unsupported'), ('source_id', None)]:
+            with self.subTest(field=field, value=value), tempfile.TemporaryDirectory() as d:
+                b = copy.deepcopy(self.bundle)
+                if value is None:
+                    b['records'][0].pop(field)
+                else:
+                    b['records'][0][field] = value
+                destination = Path(d) / 'calendar'
+                with self.assertRaises(ValueError): publish_calendar(b, destination)
+                self.assertFalse(destination.exists())
+
+    def test_invalid_coverage_is_rejected_before_publication(self):
+        for mode in ('missing_family', 'reversed_range'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as d:
+                b = copy.deepcopy(self.bundle)
+                if mode == 'missing_family':
+                    b['coverage'].pop('CPI')
+                else:
+                    b['coverage']['CPI']['end_exclusive'] = b['coverage']['CPI']['start']
+                destination = Path(d) / 'calendar'
+                with self.assertRaises(ValueError): publish_calendar(b, destination)
+                self.assertFalse(destination.exists())
+
     def test_unknown_history_is_not_an_empty_calendar(self):
         c = build_calendar(self.bundle)
         with self.assertRaisesRegex(ValueError, 'Unknown'):

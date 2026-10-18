@@ -21,6 +21,9 @@ from . import h0_blend_ratios_study as coarse
 from . import h0_blend_fine_study as fine
 from .runtime import AccessGuard
 from pp_data.io import load_dataset
+from pp_data.splitting import quote_windows, history_ids
+from .training import TrainingSession
+from .validation import PROTOCOL, PROTOCOL_PATH
 from .fixed_blend_statistics import tables
 from .runtime import canonical_identity, write_tables
 from .h0_hourly_amount import market_features
@@ -30,7 +33,6 @@ from .runtime import read_market_prefix
 from .runtime import run_destination, environment_snapshot
 from .runtime import atomic_json, file_digest
 
-PROTOCOL = decay.PROTOCOL
 COMMON = ['day', 'month', 'side', 'tenor', 'quantity', 'tail_threshold', 'tail_source', 'origin']
 CORE = COMMON + ['model', 'prediction']
 ANNOUNCEMENT_CONFIG = PROJECT/'config/announcement_overlay_v1.json'
@@ -93,20 +95,16 @@ def score_predictions(pool, predicted, end):
 def predict_announcements(pool, calendar, reference, protocol=None):
     """Apply the fixed rule at quote time; never access labels or settlement times."""
     protocol = PROTOCOL if protocol is None else protocol
+    windows = list(quote_windows(pool.metadata.created_at_utc, protocol))
     start, end = pd.Timestamp(protocol['validation_start']), pd.Timestamp(protocol['validation_end'])
     created = pool.metadata.created_at_utc
     qids = pool.X.index[created.ge(start) & created.lt(end)]
-    if (protocol['update_days'] != 7 or protocol['history_days'] != 30
-            or start.tzinfo is None or end.tzinfo is None or not pd.Timestamp(protocol['training_start']) < start < end
-            or not pool.X.index.is_unique
+    if (not pool.X.index.is_unique
             or not pool.X.index.equals(pool.metadata.index) or not reference.index.is_unique
             or not reference.index.equals(qids) or not reference.model.eq('official_raw').all()):
         raise ValueError('Invalid common announcement cohort/protocol')
-    for origin in pd.date_range(start, end, freq='7D', inclusive='left'):
-        stop = min(origin+pd.Timedelta(days=7), end)
-        q = qids[created.loc[qids].ge(origin) & created.loc[qids].lt(stop)]
-        if not len(q): continue
-        if not reference.loc[q, 'origin'].eq(origin.isoformat()).all():
+    for window in windows:
+        if not reference.loc[window.query_ids, 'origin'].eq(window.origin.isoformat()).all():
             raise ValueError('Announcement reference uses a different update clock')
     if not len(qids): raise ValueError('Empty announcement evaluation period')
     rule = AnnouncementOverlay(**{k: ANNOUNCEMENT_SETTINGS[k] for k in
@@ -144,14 +142,15 @@ def announcement_tables(predictions, ledger):
 
 def predict_all(pool, market, calendar, protocol=None):
     protocol = PROTOCOL if protocol is None else protocol
-    print('Refitting H0 and fixed time-decay recipes', flush=True)
-    a, ds, weights = decay.predict_period(pool, protocol)
-    print('Refitting state fallback and historical-error mixtures', flush=True)
-    b, ss = state.predict_period(pool, market_states(market), protocol)
-    print('Refitting hourly amount responses', flush=True)
-    c, hs = hourly.predict_period(pool, market_features(pool.metadata.created_at_utc, market), protocol)
-    print('Refitting coarse grid / causal dynamic weights; replaying fine grid from fresh parameters', flush=True)
-    e, cs = coarse.predict_period(pool, protocol)
+    training = TrainingSession(pool, protocol)
+    print('Fitting shared weekly H0 and fixed time-decay variants', flush=True)
+    a, ds, weights = decay.predict_period(pool, protocol, training=training)
+    print('Reusing H0 for state fallback and historical-error mixtures', flush=True)
+    b, ss = state.predict_period(pool, market_states(market), protocol, training=training)
+    print('Reusing H0 for hourly amount responses', flush=True)
+    c, hs = hourly.predict_period(pool, market_features(pool.metadata.created_at_utc, market), protocol, training=training)
+    print('Reusing H0 for coarse/dynamic weights; replaying the fine grid', flush=True)
+    e, cs = coarse.predict_period(pool, protocol, training=training)
     f = fine.predict_period(pool, cs, protocol)
     print('Applying the fixed additive preannounced-event rule without fitting', flush=True)
     g, af, ledger = predict_announcements(pool, calendar, a.loc[a.model.eq('official_raw')], protocol)
@@ -159,13 +158,16 @@ def predict_all(pool, market, calendar, protocol=None):
     if set(merged.model) != set(CATALOG): raise ValueError('Incomplete report recipe catalog')
     cohorts = []
     for origin, history in ds.items():
-        h = decay.history_ids(pool, pd.Timestamp(origin), protocol)
+        h = history_ids(pool, pd.Timestamp(origin), protocol)
         cohorts.append({**{k: history[k] for k in ['origin', 'stop', 'history_orders', 'query_orders',
             'earliest_training_create', 'latest_training_close']},
             'history_ids_sha256': hashlib.sha256('\n'.join(h.astype(str)).encode()).hexdigest()})
     states = dict(time_decay=ds, state_fallback=ss, hourly=hs, coarse=cs, announcement=af)
     diagnostics = dict(weight_diagnostics=weights, **announcement_tables(g, ledger),
-                       training_cohorts=pd.DataFrame(cohorts))
+        training_cohorts=pd.DataFrame(cohorts),
+        training_reuse=pd.DataFrame([dict(**training.fit_counts, cache_hits=training.cache_hits,
+            actual_h0_fits=sum(training.fit_counts.values()),
+            logical_h0_fit_requests=sum(training.fit_counts.values())+training.cache_hits)]))
     return merged, states, diagnostics
 
 
@@ -190,7 +192,7 @@ def compare_reference(summary, comparison):
 
 @threadpool_limits.wrap(limits=1)
 def run(run_id, data_dir, market_path):
-    if json.loads(decay.PROTOCOL_PATH.read_text()) != PROTOCOL: raise ValueError('Protocol changed')
+    if json.loads(PROTOCOL_PATH.read_text()) != PROTOCOL: raise ValueError('Protocol changed')
     for module in (decay, state, hourly, coarse, fine):
         if json.loads(module.CONFIG.read_text()) != module.SETTINGS: raise ValueError('Existing recipe configuration changed')
     macro_settings = json.loads(ANNOUNCEMENT_CONFIG.read_text())
@@ -204,7 +206,7 @@ def run(run_id, data_dir, market_path):
     environment = environment_snapshot()
     paths = {calendar_path, PROJECT/'docs/plans/2026-10-15-report-unified-rerun.md',
              PROJECT/'scripts/verify_report_unified.py'}
-    for folder, pattern in [('pp_models', '*.py'), ('pp_data', '*.py'), ('pp_audit', '*.py'), ('pp_calendar', '*.py'), ('config', '*.json'), ('tests', '*.py'), ('scripts', '*.py')]:
+    for folder, pattern in [('pp_models', '*.py'), ('pp_data', '*.py'), ('pp_audit', '*.py'), ('pp_calendar', '*.py'), ('pp_pricing', '*.py'), ('pp_pricing', '*.json'), ('config', '*.json'), ('tests', '*.py'), ('scripts', '*.py')]:
         paths.update((PROJECT/folder).glob(pattern))
     sources = {str(p.relative_to(PROJECT)): file_digest(p) for p in sorted(paths)}
     protected = {str(p.relative_to(PROJECT)): file_digest(p) for p in (PROJECT/'docs/results').rglob('*') if p.is_file()}
@@ -236,12 +238,12 @@ def run(run_id, data_dir, market_path):
             raise ValueError('Canonical data changed')
         for name, digest in {**sources, **protected}.items():
             if file_digest(PROJECT/name) != digest: raise ValueError('Source/reference changed: '+name)
-        fits = dict(h0_time_decay=len(states['time_decay'])*3,
-                    h0_state=sum(s['h0_supported'] for s in states['state_fallback'].values()),
-                    h0_hourly=len(states['hourly']), h0_coarse=sum(s['h0_supported'] for s in states['coarse'].values()),
-                    hourly_amount=len(states['hourly'])*3, announcement=0)
+        reuse = diagnostics['training_reuse'].iloc[0].to_dict()
+        fits = {name: int(reuse[name]) for name in ('h0', 'h0_decay7', 'h0_decay14')}
+        fits.update(hourly_amount=len(states['hourly'])*3, announcement=0)
         manifest = dict(status='complete', producer=SETTINGS['version'], coverage=coverage, recipes=len(CATALOG),
-            fits=fits, reference_results_reproduced=True, official_validation_open_attempts=guard.official_attempts,
+            fits=fits, training_cache_hits=int(reuse['cache_hits']),
+            reference_results_reproduced=True, official_validation_open_attempts=guard.official_attempts,
             july_role='seen_rolling_validation',
             elapsed_seconds=perf_counter()-began, max_rss_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
             environment=environment, artifacts={str(p.relative_to(root)): file_digest(p) for p in root.rglob('*') if p.is_file()})

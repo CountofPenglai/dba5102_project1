@@ -1,5 +1,5 @@
 """Versioned public schedules, isolated from the frozen preprocessing package."""
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -24,15 +24,32 @@ def build_calendar(bundle):
     if bundle['timezone'] != 'America/New_York' or bundle['schema_version'] != 1:
         raise ValueError('Unsupported calendar schema')
     asof = timestamp(bundle['as_of_utc'])
+    # Reject incomplete coverage before publishing an immutable, unusable snapshot.
+    coverage = bundle.get('coverage')
+    if not isinstance(coverage, dict) or set(coverage) != set(FAMILIES):
+        raise ValueError('Coverage is required for every supported event family')
+    for span in coverage.values():
+        try:
+            lo, hi = date.fromisoformat(span['start']), date.fromisoformat(span['end_exclusive'])
+        except (KeyError, TypeError) as error:
+            raise ValueError('Coverage needs valid local start/end dates') from error
+        if hi <= lo:
+            raise ValueError('Coverage end must follow start')
     source_ids = [s['source_id'] for s in bundle['sources']]
-    if len(source_ids) != len(set(source_ids)):
-        raise ValueError('Duplicate sources')
+    if (any(not isinstance(s, str) or not s.strip() for s in source_ids)
+            or len(source_ids) != len(set(source_ids))):
+        raise ValueError('Sources must have unique nonempty IDs')
     rows, seen = [], set()
     for raw in bundle['records']:
         row = raw.copy()
         if row['event_id'] in seen or row['family'] not in FAMILIES:
             raise ValueError('Duplicate event or invalid family')
         seen.add(row['event_id'])
+        kinds = ('statement', 'press_conference') if row['family'] == 'FOMC' else ('release',)
+        if row.get('kind') not in kinds:
+            raise ValueError('Missing or invalid event kind')
+        if row.get('source_id') not in source_ids:
+            raise ValueError('Event requires a known source')
         for key in ['source_id', 'announcement_source_id']:
             if row.get(key) is not None and row[key] not in source_ids:
                 raise ValueError('Unknown source')

@@ -36,6 +36,7 @@ def match_states(created, states):
 
 
 class StateGate:
+    # Measures novelty relative to recent market states, not payout probability.
     def fit(self, states, origin, training_start):
         origin = pd.Timestamp(origin); earliest = max(pd.Timestamp(training_start), origin-pd.Timedelta(days=30))
         if (origin.tzinfo is None or states.index.tz is None or not states.index.is_unique or list(states) != STATE_COLUMNS):
@@ -46,6 +47,7 @@ class StateGate:
             latest_hour=h.index.max().isoformat() if len(h) else None)
         if len(h) >= 168:
             raw = h.to_numpy(); center = np.median(raw, axis=0)
+            # Median/IQR scaling limits extreme hours' influence on the background.
             scale = (np.quantile(raw, .75, axis=0)-np.quantile(raw, .25, axis=0))/1.349
             scale[scale < 1e-6] = 1.
             d = np.sqrt(np.mean(((raw-center)/scale)**2, axis=1)); lo, hi = np.quantile(d, [.9, .99])
@@ -57,10 +59,13 @@ class StateGate:
         if not hasattr(self, 'state'): raise ValueError('State background not fitted')
         if list(features) != STATE_COLUMNS: raise ValueError('Unexpected state features')
         valid = np.isfinite(features.to_numpy()).all(axis=1); distance = np.full(len(features), np.nan)
+        # gate=1 means full fallback to Base; unknown states take that default.
+        # The caller multiplies H0's blend weight by (1-gate).
         gate = np.ones(len(features))
         if self.state['supported'] and valid.any():
             z = (features.loc[valid].to_numpy()-self.state['center'])/self.state['scale']
             distance[valid] = np.sqrt(np.mean(z*z, axis=1))
+            # Move from no fallback at historical q90 to full fallback at q99.
             gate[valid] = np.clip((distance[valid]-self.state['q90'])/(self.state['q99']-self.state['q90']), 0, 1)
         return gate, distance
 
@@ -79,6 +84,7 @@ def history_weight(past, origin):
             & past.forecast_origin.le(past.created)).all():
         raise ValueError('Non-forward or unsettled history')
     n = len(past); days = int(past.created.dt.floor('D').nunique())
+    # Insufficient settled forward history uses Base (alpha=0), not a fitted weight.
     par = dict(alpha=0., supported=False, reason='insufficient_oos_support', orders=n, days=days,
         latest_close=past.closed.max().isoformat() if n else None,
         latest_forecast_origin=past.forecast_origin.max().isoformat() if n else None)
@@ -87,6 +93,9 @@ def history_weight(past, origin):
         d2 = float(d@d); cross = float(d@delta)
         if d2 <= 1e-12: par['reason'] = 'identical_anchors'
         else:
+            # Minimize sum((alpha*d-delta)^2) + penalty*(alpha-0.5)^2.
+            # The closed-form solution is clipped to a convex blend; no future errors
+            # or retrospectively selected monthly weights enter this objective.
             penalty = 100*d2/n; alpha = float(np.clip((cross+.5*penalty)/(d2+penalty), 0, 1))
             par.update(alpha=alpha, supported=True, reason='none', difference_ss=d2, cross=cross, penalty=penalty,
                 h0_historical_mse=float(np.mean((past.h0-past.actual)**2)),

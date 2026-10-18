@@ -16,6 +16,8 @@ def time_weights(created, origin, half_life_days):
     if half_life_days is None:
         return np.ones(len(created))
     age = (origin-created).dt.total_seconds().to_numpy()/86400
+    # One half-life halves an order's influence; recency is measured from creation.
+    # Settlement eligibility is enforced by the shared training-window selector.
     weights = np.exp2(-age/half_life_days)
     if not np.isfinite(weights).all() or (weights <= 0).any():
         raise ValueError('Time weights underflowed; use a finite history window')
@@ -23,6 +25,7 @@ def time_weights(created, origin, half_life_days):
 
 
 def effective_size(weights):
+    # Kish effective sample size: concentrated weights imply less usable support.
     return float(weights.sum()**2/(weights@weights)) if len(weights) and (weights@weights) > 0 else 0.
 
 
@@ -45,20 +48,26 @@ class TimeDecayH0(H0):
             mask = X.option_type.eq(side); n = int(mask.sum())
             b = X.loc[mask, BASE_FEATURE].to_numpy(float); target = y.loc[mask].to_numpy(float)
             positive = target > 0; w = raw[mask.to_numpy()]
+            # Keep total logistic weight equal to the direction's order count, so
+            # recency weighting does not also change the effective regularization.
             weights = w/w.mean() if n else w
             if self.half_life_days is not None:
                 par = dict(c=1., probability=1., severity=1.)
                 if n:
                     par['probability'] = 1. if positive.all() else float(weights@positive/weights.sum())
+                    # Weighted zero-intercept severity fit. Normalizing all weights
+                    # by a common factor would leave this coefficient unchanged.
                     par['severity'] = float(np.sum(w[positive]*b[positive]*target[positive]) /
                         np.sum(w[positive]*b[positive]**2)) if positive.any() else 0.
                     if 0 < positive.sum() < n:
+                        # Keep H0's unweighted scaler to isolate the weighting change.
                         design = hurdle_design(X.loc[mask]); scaler = StandardScaler().fit(design)
                         model = LogisticRegression(C=.1, max_iter=1000, tol=1e-9, solver='lbfgs')
                         model.fit(np.clip(scaler.transform(design), -3, 3), positive.astype(int), sample_weight=weights)
                         par.update(scaler=scaler, model=model)
                 self.parameters[side] = par
             pos_w = w[positive]; leverage = pos_w*b[positive]**2
+            # Diagnostics distinguish order weights from Base-squared severity leverage.
             months = created.loc[mask].dt.strftime('%Y-%m').to_numpy()
             numerator = w*b*target; denominator = w*b*b*positive
             self.weight_diagnostics[side] = dict(orders=n, positive_orders=int(positive.sum()),

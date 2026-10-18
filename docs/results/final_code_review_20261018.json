@@ -1,0 +1,71 @@
+{
+  "status": "passed",
+  "tests": {
+    "passed": 110,
+    "added": 5,
+    "command": "python -m unittest discover -s tests"
+  },
+  "resolved_issues": [
+    "literal_order_ids_parsed_as_missing",
+    "mixed_timestamp_precision_breaks_migration",
+    "invalid_quantity_or_inconsistent_payout_units_accepted",
+    "incomplete_calendar_bundle_published"
+  ],
+  "unused_imports_removed": 11,
+  "existing_data_check": {
+    "orders": 7055,
+    "positive_quantity": true,
+    "unit_payout_consistent": true,
+    "maximum_unit_difference": 0.0
+  },
+  "real_data_model_fit_calls": 0,
+  "official_validation_open_attempts": 0,
+  "delivery": {
+    "status": "passed",
+    "published_files_checked": 19,
+    "report_hash_unchanged": true,
+    "headline_metrics_checked": 12,
+    "h0_may_june_rmse_and_mae_verified": true,
+    "model_fitted_at": "2026-07-31T00:00:00+00:00",
+    "model_sha256": "77b3a8c1cc15a219bf3e9188526c12ee9026461673536590665b4ba85d3b54ce",
+    "weekly_replay": {
+      "weekly_states": 12,
+      "orders": 4640,
+      "maximum_h0_absolute_difference": 2.2737367544323206e-13,
+      "final_blend_metrics": {
+        "macro_rmse_per_btc": 293.04802481408905,
+        "macro_mae_per_btc": 183.5580565930617,
+        "pooled_rmse_per_btc": 295.6140432392129,
+        "pooled_mae_per_btc": 185.80382025125272
+      }
+    },
+    "model_fit_calls": 0,
+    "official_validation_open_attempts": 0
+  },
+  "report_replay": {
+    "status": "passed",
+    "weekly_cohorts": 12,
+    "models_daily_checked": 97,
+    "daily_aggregate_rows_checked": 1164,
+    "independently_replayed_models": 87,
+    "independently_replayed_summary_rows": 4611,
+    "quadratic_rmse_models_checked": 86,
+    "announcement_orders_independently_replayed": 4640,
+    "risk_rows_checked": 2024,
+    "model_fit_calls": 0,
+    "official_validation_open_attempts": 0,
+    "scope": "hashes, causal cohorts, H0 parameter identity, all daily moments, fixed and announcement replay; uncertainty uses existing tested statistics implementation"
+  },
+  "clean_copy": {
+    "status": "passed",
+    "private_data_copied": false,
+    "training_imports_loaded": false,
+    "cli_help_entrypoints": 9,
+    "synthetic_feature_quotes": 2,
+    "synthetic_official_format_quotes": 2,
+    "literal_order_ids_preserved": true,
+    "published_delivery_check": "passed"
+  },
+  "independent_review": "Data/calendar fixes and inference/import cleanup re-reviewed; no actionable findings remain.",
+  "local_markdown_links_checked": 91
+}

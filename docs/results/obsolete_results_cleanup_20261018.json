@@ -1,0 +1,86 @@
+{
+  "status": "passed",
+  "live_configurations_retained": 8,
+  "removed_tracked_snapshot_files": 17,
+  "removed_tracked_paths": [
+    "docs/results/report_unified_v3_20261015_r2/config.json",
+    "docs/results/report_unified_v3_20261015_r2/independent_verification.json",
+    "docs/results/report_unified_v3_20261015_r2/manifest.json",
+    "docs/results/report_unified_v3_20261015_r2/protocol.json",
+    "docs/results/report_unified_v3_20261015_r2/validation/announcement_routing.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/announcement_support.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/comparisons.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/fixed_grid.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/influence.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/intervals.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/macro_monthly.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/monthly_risk_constraints.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/reference_checks.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/risk_constraints.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/scoped_macro.csv",
+    "docs/results/report_unified_v3_20261015_r2/validation/training_cohorts.csv",
+    "docs/results/architecture_cleanup_verification.json"
+  ],
+  "removed_local_runs": [
+    {
+      "run": "report_unified_v3_20261015_r2",
+      "files": 26,
+      "bytes": 41106405,
+      "manifest_sha256": "4c2744d38d9615bf28819834afa66ceb802b53faad52b31c7fd94fcc164dfd35"
+    },
+    {
+      "run": "report_cleanup_v3_20261015",
+      "files": 26,
+      "bytes": 40989941,
+      "manifest_sha256": "cf68104624a91cdd127516701164fd5234aebab0ea4724326d337c39aca50ecc"
+    }
+  ],
+  "filtered_reference_tables": {
+    "summary.csv": {
+      "retained_rows": 795,
+      "removed_rows": 159,
+      "removed_models": [
+        "announcement_l1",
+        "announcement_l10",
+        "announcement_l100"
+      ],
+      "sha256": "76cc88457bc827df95913b6c54f8fa770e5cdcd803d41de6498f5953c8ec031c"
+    },
+    "model_comparison.csv": {
+      "retained_rows": 96,
+      "removed_rows": 3,
+      "removed_models": [
+        "announcement_l1",
+        "announcement_l10",
+        "announcement_l100"
+      ],
+      "sha256": "f611b679292adc98bf87d287fd0e8a23b7e2770d24bdf497a27189311d69c46f"
+    }
+  },
+  "regression_check_unchanged": [
+    {
+      "reference": "report_unified_v3_20261015_r2",
+      "summary_groups": 795,
+      "models": 96,
+      "maximum_absolute_difference": 1.8189894035458565e-11,
+      "reproduced": true
+    }
+  ],
+  "protected_files_unchanged": 30,
+  "model_sha256": "77b3a8c1cc15a219bf3e9188526c12ee9026461673536590665b4ba85d3b54ce",
+  "official_validation_open_attempts": 0,
+  "verification": {
+    "tests_passed": 105,
+    "active_configurations_verified": 8,
+    "local_markdown_links_checked": 88,
+    "retained_run_artifacts_verified": 49,
+    "delivery_verification": "passed",
+    "published_files_checked": 19,
+    "weekly_states_replayed": 12,
+    "orders_replayed": 4640,
+    "maximum_h0_absolute_difference": 2.2737367544323206e-13,
+    "real_data_model_fit_calls": 0,
+    "official_validation_open_attempts": 0,
+    "diff_whitespace_check": "passed"
+  }
+}

@@ -23,7 +23,7 @@ def pool_statistics(metadata):
     """Summarize the pool without assigning any model evaluation roles."""
     dates = metadata.copy()
     for name in ("created_at_utc", "closed_at_utc"):
-        dates[name] = pd.to_datetime(dates[name], utc=True)
+        dates[name] = pd.to_datetime(dates[name], utc=True, format="mixed")
     rows = []
     for cohort in ("risk", "benchmark"):
         selected = dates if cohort == "risk" else dates.loc[dates.benchmark_eligible]

@@ -25,6 +25,7 @@ def aware_timestamp(value):
 
 @dataclass(frozen=True)
 class AnnouncementOverlay:
+    # A separate report experiment, not an automatic layer in the delivered blend.
     per_event_cap: float = .01
     total_cap: float = .05
     pre_half_life_hours: float = 24.
@@ -82,9 +83,13 @@ class AnnouncementOverlay:
                 out['status'] = 'outside_coverage'; rows.append(out); continue
             contributions = {}
             for key, family, time, known in events:
+                # Availability follows the evidence timestamp, not today's knowledge
+                # that the event eventually occurred.
                 if known > at:
                     continue
                 until = (time-at).total_seconds()
+                # Approach the per-event cap exponentially before release, then
+                # decay linearly to zero over the fixed post-release interval.
                 weight = (float(np.exp2(-until/(3600*self.pre_half_life_hours))) if until > 0
                           else max(0., 1+until/(60*self.post_minutes)))
                 if weight <= 0:
@@ -99,6 +104,7 @@ class AnnouncementOverlay:
                     contributions[key] = item
             raw = sum(c['raw_adjustment'] for c in contributions.values())
             if contributions:
+                # Independent events add percentage points, never compound multipliers.
                 adjustment = min(self.total_cap, raw)
                 for item in contributions.values():
                     # Preserve an exact additive attribution when the total cap binds.

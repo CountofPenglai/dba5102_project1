@@ -4,8 +4,10 @@ import pandas as pd
 from threadpoolctl import threadpool_limits
 from pp_data.config import PROJECT
 from pp_data.features import BASE_FEATURE
-from .h0 import H0, hurdle_design, probability_frame, h0_state
-from .validation import PROTOCOL, PROTOCOL_PATH, history_ids, tail_context
+from .pricing_inputs import hurdle_design
+from .validation import PROTOCOL, prediction_context
+from pp_data.splitting import RollingSplitter
+from .training import MIN_TRAINING_ORDERS
 from scipy.special import expit
 
 CALL_GRID = tuple((i / 100 for i in range(25, 66, 5)))
@@ -34,36 +36,22 @@ def replay_h0(x, state):
 @threadpool_limits.wrap(limits=1)
 def predict_period(pool, archived_states, protocol=None):
     protocol = PROTOCOL if protocol is None else protocol
-    start, end = pd.Timestamp(protocol['validation_start']), pd.Timestamp(protocol['validation_end'])
-    if (start.tzinfo is None or end.tzinfo is None or not pd.Timestamp(protocol['training_start']) < start < end
-            or start != start.floor('D') or protocol['history_days'] != 30 or protocol['update_days'] != 7
-            or not pool.X.index.is_unique or not pool.X.index.equals(pool.y.index) or not pool.X.index.equals(pool.metadata.index)
-            or not pool.X.option_type.isin([0, 1]).all()):
-        raise ValueError('Invalid archived weekly replay inputs')
-    created, closed = pool.metadata.created_at_utc, pool.metadata.closed_at_utc
+    splitter = RollingSplitter(pool, protocol)
+    if not pool.X.option_type.isin([0, 1]).all():
+        raise ValueError('Invalid replay option direction')
     frames = []
-    for origin in pd.date_range(start, end, freq='7D', inclusive='left'):
-        stop = min(origin+pd.Timedelta(days=7), end); text = origin.isoformat()
-        q = pool.X.index[created.ge(origin) & created.lt(stop)]
-        if not len(q): continue
+    for window in splitter.windows():
+        origin, stop = window.origin, window.stop
+        q, h = window.query_ids, window.history_ids
+        text = origin.isoformat()
         state = archived_states.get(text)
         if state is None or not state['h0_supported'] or not state['is_validation']:
             raise ValueError('Missing or unsupported archived validation week: '+text)
-        h = history_ids(pool, origin, protocol)
-        if (state['origin'] != text or pd.Timestamp(state['stop']) != stop or state['history_orders'] != len(h)
-                or state['query_orders'] != len(q) or len(h) < 100
-                or state['earliest_training_create'] != created.loc[h].min().isoformat()
-                or state['latest_training_close'] != closed.loc[h].max().isoformat()):
+        expected = splitter.describe(window)
+        if len(h) < MIN_TRAINING_ORDERS or any(state[k] != value for k, value in expected.items()):
             raise ValueError('Archived training history or weekly grid mismatch')
         x = pool.X.loc[q]; hp = replay_h0(x, state['h0']); bp = x[BASE_FEATURE].to_numpy()
-        threshold = pd.Series(index=q, dtype=float); source = pd.Series(index=q, dtype=object)
-        for month in sorted(created.loc[q].dt.strftime('%Y-%m').unique()):
-            mo = pd.Timestamp(month+'-01', tz='UTC'); mq = q[created.loc[q].dt.strftime('%Y-%m').eq(month)]
-            tv, sv = tail_context(pool, history_ids(pool, mo, protocol, window=False), mq)
-            threshold.loc[mq] = tv; source.loc[mq] = sv
-        common = pd.DataFrame(dict(day=created.loc[q].dt.floor('D'), month=created.loc[q].dt.strftime('%Y-%m'),
-            side=x.option_type.astype(int), tenor=x.product_duration_seconds.astype(int), quantity=x.quantity_btc,
-            tail_threshold=threshold, tail_source=source, origin=text, h0_prediction=hp, base_prediction=bp), index=q)
+        common = prediction_context(pool, window, splitter).assign(h0_prediction=hp, base_prediction=bp)
         for name, pair in FIXED.items():
             a = np.where(x.option_type.eq(0), pair[0], pair[1]); pred = a*hp+(1-a)*bp
             if not np.isfinite(pred).all() or (pred < 0).any(): raise ValueError('Invalid fixed convex prediction')

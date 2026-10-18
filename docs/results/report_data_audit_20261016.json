@@ -1,0 +1,167 @@
+{
+  "audit_date": "2026-10-16",
+  "base_commit": "a837bdd9209c531921bb4992d2c3d21be93dc971",
+  "status": "passed_with_documentation_clarifications",
+  "report": "docs/deliverables/研究报告大纲_H0与Base混合模型.docx",
+  "report_sha256": "240fbd48da3dbe506f4715bb1cb4c1c6fc594d7c27711a2e341fca62102ddfa2",
+  "previous_report_sha256": "6031b0ff81c74aa75c7d0adace07f86c59d79c20c0b00552b3093f8296223307",
+  "result_run": "report_announcement_v1_20261016",
+  "result_source_manifest_sha256": "bc34debcf4ea63abd70bca6aaa3c8c2cac7f76e7e9d04a8cda872ce6fb6b9253",
+  "published_source_file_pairs_verified": 19,
+  "report_tables_reviewed": 25,
+  "report_tables_changed": 0,
+  "report_table_checks": 276,
+  "report_inline_checks": 56,
+  "report_other_checks": 7,
+  "report_check_failures": [],
+  "markdown_primary_metric_cells_checked": 64,
+  "local_docx_links_checked": 21,
+  "docx_pages": 18,
+  "docx_text_paragraphs_changed_1based": [
+    24,
+    196,
+    211
+  ],
+  "original_data": {
+    "raw_orders": 7204,
+    "risk_orders": 7055,
+    "benchmark_orders": 5934,
+    "validation_orders": 4640,
+    "validation_side_counts": {
+      "0": 2580,
+      "1": 2060
+    },
+    "actual_payout_usdc": 183890.58608118637,
+    "min_candle_age_seconds": 0.001,
+    "max_candle_age_seconds": 59.001,
+    "market_prefix_rows": 304871,
+    "market_last_close": "2026-07-31T17:10:59.999000+00:00",
+    "official_validation_open_attempts": 0
+  },
+  "historical_exclusions": {
+    "quality_or_missing_labels": 125,
+    "unsettled_june_boundary": 3,
+    "unsettled_july_boundary": 3,
+    "unsettled_final_cutoff": 18,
+    "total": 149
+  },
+  "independent_model_verification": {
+    "announcement_orders_independently_replayed": 4640,
+    "daily_aggregate_rows_checked": 1164,
+    "independently_replayed_models": 87,
+    "independently_replayed_summary_rows": 4611,
+    "model_fit_calls": 0,
+    "models_daily_checked": 97,
+    "official_validation_open_attempts": 0,
+    "quadratic_rmse_models_checked": 86,
+    "risk_rows_checked": 2024,
+    "scope": "hashes, causal cohorts, H0 parameter identity, all daily moments, fixed and announcement replay; uncertainty uses existing tested statistics implementation",
+    "status": "passed",
+    "weekly_cohorts": 12
+  },
+  "independent_uncertainty_verification": {
+    "weekly_h0_histories_checked": 12,
+    "uncertainty_checks": 14,
+    "intervals": [
+      {
+        "model": "blend_c040_p015",
+        "block": 3,
+        "rmse_interval": [
+          -2.088870521679374,
+          1.2386539547052937
+        ],
+        "mae_interval": [
+          -2.24051073301244,
+          0.31032678627530474
+        ]
+      },
+      {
+        "model": "blend_c040_p015",
+        "block": 7,
+        "rmse_interval": [
+          -1.9943600766025553,
+          0.8444845662767282
+        ],
+        "mae_interval": [
+          -2.273110764287279,
+          0.07928141878125236
+        ]
+      },
+      {
+        "model": "blend_c040_p015",
+        "block": 14,
+        "rmse_interval": [
+          -1.9472931866005183,
+          0.7317962282256084
+        ],
+        "mae_interval": [
+          -2.2217505395248365,
+          -0.055778458216535064
+        ]
+      },
+      {
+        "model": "base_announcement_overlay",
+        "block": 3,
+        "rmse_interval": [
+          -0.04366374627326195,
+          0.0237633047389579
+        ],
+        "mae_interval": [
+          0.017271737601505778,
+          0.08821613014029592
+        ]
+      },
+      {
+        "model": "base_announcement_overlay",
+        "block": 7,
+        "rmse_interval": [
+          -0.04645507617374491,
+          0.019398771869838783
+        ],
+        "mae_interval": [
+          0.016424985342715102,
+          0.08602458214931656
+        ]
+      },
+      {
+        "model": "base_announcement_overlay",
+        "block": 14,
+        "rmse_interval": [
+          -0.04437277026747495,
+          0.01673373866279348
+        ],
+        "mae_interval": [
+          0.021903129847693492,
+          0.08926005091440459
+        ]
+      }
+    ],
+    "official_validation_open_attempts": 0
+  },
+  "calendar": {
+    "snapshot": "external_data/macro_events/snapshots/20261014T123002Z.json",
+    "sha256": "98fea317fa4dac0efdebd64a2d5780bf823ef1660d97daa2f86aedaaad5cf3f9",
+    "records": 82,
+    "main_events": 65,
+    "material_events": 6,
+    "material_post_event_contribution_records": 53,
+    "source_bundle_rebuild_equal": true,
+    "live_schedule_refresh": false
+  },
+  "corrections": [
+    "Current simultaneous comparison count is 253, replacing stale documentation count 257",
+    "7204 refers to delivered filtered training data",
+    "53 refers to event contribution records",
+    "Base observable-at-creation assumption follows official documentation; original matching timestamps not supplied",
+    "Removed obsolete uncommitted/unpushed status from current result note"
+  ],
+  "model_training_calls": 0,
+  "official_validation_open_attempts": 0,
+  "numerical_model_results_changed": false,
+  "boundaries": [
+    "Base source timestamp detail is a supplier documentation boundary, not demonstrated lookahead leakage",
+    "May-July remains seen validation, not independent testing",
+    "Selected mixture advantage remains uncertain and full risk conditions are not all passed",
+    "Calendar audit checks frozen evidence package, not new live source collection"
+  ]
+}

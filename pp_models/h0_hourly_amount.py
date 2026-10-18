@@ -20,10 +20,13 @@ def market_features(created, market):
             or not np.isfinite(m.close).all() or m.close.le(0).any()):
         raise ValueError('Invalid audited minute candles')
     minutes = pd.date_range(m.open_time_utc.min(), m.open_time_utc.max(), freq='min')
+    # Reindexing exposes gaps; a full rolling window is required instead of filling
+    # missing prices and accidentally treating them as zero returns.
     price = m.set_index('open_time_utc').close.reindex(minutes)
     returns = np.log(price).diff()
     right = pd.DataFrame({'at': minutes+pd.Timedelta(milliseconds=59999)})
     for w in (60, 240):
+        # Directional minute RMS returns, unlike H0's one-hour sqrt(sum) volatility.
         for label, r in (('up', returns.clip(lower=0)), ('down', returns.clip(upper=0))):
             right[f'{label}_vol_{w}m'] = np.sqrt(r.pow(2).rolling(w, min_periods=w).mean()).to_numpy()
     left = pd.DataFrame({'created': created.array, 'position': np.arange(len(created))})
@@ -42,9 +45,12 @@ def amount_features(x, market, anchor):
             or x[['remaining_seconds', 'market_price_usdc_per_btc']].le(0).any().any()):
         raise ValueError('Invalid aligned amount features/anchor')
     call = x.option_type.eq(0)
+    # Calls respond to upward variation and Puts to downward variation.
     v60 = np.where(call, market.up_vol_60m, market.down_vol_60m)
     v240 = np.where(call, market.up_vol_240m, market.down_vol_240m)
     available = market.available.to_numpy(bool) & np.isfinite(v60) & np.isfinite(v240) & (v60 >= 0) & (v240 >= 0)
+    # `anchor` is H0's conditional amount (Base*c), not its probability-weighted
+    # prediction. Level compares a duration-scaled price move with that amount.
     level = np.log1p(x.market_price_usdc_per_btc.to_numpy()*v60*np.sqrt(x.remaining_seconds.to_numpy()/60) /
         np.maximum(anchor.to_numpy(), 1.))
     speed = np.log((v60+1e-8)/(v240+1e-8))
@@ -61,12 +67,14 @@ def check_alignment(side, features, anchor):
 
 
 def gate(features, q75, q95):
+    # Both an elevated level and recent acceleration are needed for activation.
     level = np.clip((features.level.to_numpy()-q75)/(q95-q75), 0, 1)
     ratio = np.exp(np.clip(features.speed.to_numpy(), -30, 30))
     return level*np.clip((ratio-1.25)/.75, 0, 1)
 
 
 class HourlyAmount:
+    # Research alternatives only: the final delivered blend does not use this layer.
     def __init__(self, name):
         if name not in CANDIDATES: raise ValueError('Unknown fixed hourly amount model')
         self.name = name; self.fitted = False
@@ -101,9 +109,13 @@ class HourlyAmount:
                     mean = np.average(raw, axis=0, weights=weights)
                     scale = np.sqrt(np.average((raw-mean)**2, axis=0, weights=weights)); scale[scale < 1e-8] = 1.
                     z = np.clip((raw-mean)/scale, -3, 3)
+                    # Center under s0**2 weights so the linear adjustment has zero
+                    # weighted mean on positive training claims before caps apply.
                     center = np.average(z, axis=0, weights=weights); phi = z-center
                     par.update(columns=columns, mean=mean.tolist(), scale=scale.tolist(), center=center.tolist())
                 normalization = float(np.sqrt(np.mean(s0*s0)))
+                # Ridge fits y ~= s0 * (1 + phi*beta). Scaling both sides by RMS(s0)
+                # keeps the shrinkage strength comparable across payout magnitudes.
                 design = phi*(s0/normalization)[:, None]
                 rhs = design.T@((target-s0)/normalization)
                 try:
@@ -120,6 +132,7 @@ class HourlyAmount:
     def predict(self, side, features, anchor):
         if not self.fitted: raise ValueError('Hourly amount model is not fitted')
         valid = check_alignment(side, features, anchor)
+        # Missing market history or insufficient fitting support leaves H0 unchanged.
         output = anchor.to_numpy(float).copy(); supported = np.zeros(len(side), bool)
         for s in (0, 1):
             par = self.parameters[str(s)]; use = side.eq(s) & valid & anchor.gt(0)
@@ -129,6 +142,7 @@ class HourlyAmount:
                 phi = gate(f, par['q75'], par['q95'])[:, None]
             else:
                 phi = np.clip((f[par['columns']].to_numpy()-par['mean'])/par['scale'], -3, 3)-par['center']
+            # Continuous variants allow +/-10%; the gated variant can only increase.
             delta = np.clip(phi@par['beta'], 0. if self.name == 'amount_gate' else -.1, .1)
             output[use] *= 1+delta; supported[use] = True
         if not np.isfinite(output).all() or (output < 0).any(): raise ValueError('Invalid hourly severity')

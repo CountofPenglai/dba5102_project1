@@ -130,6 +130,14 @@ def _validate_tables(tables, config, research_end):
         raise ValueError("Dataset features contain nonfinite values")
     if not valid_targets or not targets.positive_payout.isin([0, 1]).all():
         raise ValueError("Dataset targets contain invalid values")
+    # Hashes verify bytes, not units. Migration and loading must also agree on
+    # total payout versus payout per BTC; reject inconsistencies without repair.
+    if not features.quantity_btc.gt(0).all():
+        raise ValueError("Dataset quantity must be strictly positive")
+    with np.errstate(over="ignore", divide="ignore", invalid="ignore"):
+        unit_payout = targets.payout_usdc / features.quantity_btc
+    if not np.allclose(targets.payout_per_btc_usdc, unit_payout, rtol=1e-12, atol=1e-9):
+        raise ValueError("Dataset payout units disagree with quantity")
     if not targets.positive_payout.eq(targets.payout_usdc.gt(0)).all():
         raise ValueError("Dataset targets disagree about positive payout")
     common_base = features.loc[metadata.benchmark_eligible, BASE_FEATURE]
