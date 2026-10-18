@@ -70,7 +70,7 @@ Prepare an authorized dataset using the [data guide](docs/data_pipeline.md). Rep
 ```sh
 .venv/bin/python -m pip install -r requirements-models.txt
 .venv/bin/python -m pp_models --run-id report_local --data-dir outputs/preprocessing --market-path /path/to/btc_market_history.csv
-.venv/bin/python scripts/verify_report_unified.py outputs/model_studies/report_local
+.venv/bin/python scripts/verify_report_unified.py outputs/model_studies/report_local --data-dir outputs/preprocessing
 ```
 
 Check the code and included delivery artifacts without starting research training:
@@ -154,7 +154,7 @@ outputs/       本地生成数据与运行结果，不纳入 Git
 ```sh
 .venv/bin/python -m pip install -r requirements-models.txt
 .venv/bin/python -m pp_models --run-id report_local --data-dir outputs/preprocessing --market-path /path/to/btc_market_history.csv
-.venv/bin/python scripts/verify_report_unified.py outputs/model_studies/report_local
+.venv/bin/python scripts/verify_report_unified.py outputs/model_studies/report_local --data-dir outputs/preprocessing
 ```
 
 检查代码与交付产物，以下命令不会启动研究训练：

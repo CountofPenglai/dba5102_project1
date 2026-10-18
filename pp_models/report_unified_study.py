@@ -204,7 +204,7 @@ def run(run_id, data_dir, market_path):
     root.mkdir(parents=True); (root/'provenance').mkdir(); began = perf_counter()
     canonical = canonical_identity(data_dir)
     environment = environment_snapshot()
-    paths = {calendar_path, PROJECT/'docs/plans/2026-10-15-report-unified-rerun.md',
+    paths = {calendar_path, PROJECT/'docs/validation_protocol_v3.md',
              PROJECT/'scripts/verify_report_unified.py'}
     for folder, pattern in [('pp_models', '*.py'), ('pp_data', '*.py'), ('pp_audit', '*.py'), ('pp_calendar', '*.py'), ('pp_pricing', '*.py'), ('pp_pricing', '*.json'), ('config', '*.json'), ('tests', '*.py'), ('scripts', '*.py')]:
         paths.update((PROJECT/folder).glob(pattern))

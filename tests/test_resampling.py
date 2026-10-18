@@ -35,3 +35,13 @@ class ResamplingTests(unittest.TestCase):
         self.assertEqual(row.cunder, .5); self.assertEqual(row.runder, 0.)
         with self.assertRaises(ValueError):
             paired_daily(pd.concat([a, b.assign(actual=3.)]), 'a', 'b', days)
+
+    def test_independent_metrics_and_cash_sign(self):
+        from pp_models.metrics import key_metrics
+        from pp_models.verification import metrics
+        f = pd.DataFrame(dict(actual=[0., 100.], prediction=[10., 70.], quantity=[2., 3.]))
+        a = key_metrics(f.actual, f.prediction, f.quantity)
+        self.assertAlmostEqual(a['rmse_per_btc'], np.sqrt(500))
+        self.assertEqual(a['gross_underprediction_usdc'], 90.)
+        self.assertEqual(a['total_bias_usdc'], -70.)
+        for k, v in a.items(): self.assertAlmostEqual(metrics(f)[k], v)

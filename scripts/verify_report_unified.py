@@ -73,7 +73,7 @@ def check_daily(summary, daily, macro):
     return rows
 
 
-def verify(root):
+def verify(root, data_dir=None):
     root = Path(root)
     read = lambda name: json.loads((root/'provenance'/name).read_text())
     manifest, pre, protocol, states = (read(name) for name in
@@ -85,8 +85,11 @@ def verify(root):
         for name, digest in pre['sources'].items():
             assert hashlib.sha256(archive.read(name)).hexdigest() == digest, name
     guard = AccessGuard(); sys.addaudithook(guard.check)
-    data_dir = Path(pre['data_dir'])
-    assert canonical_identity(data_dir) == pre['canonical']
+    # A checkout can move; the dataset identity, not its original absolute path,
+    # must still match the immutable run provenance.
+    data_dir = Path(pre['data_dir'] if data_dir is None else data_dir)
+    if canonical_identity(data_dir) != pre['canonical']:
+        raise ValueError('Replay dataset differs from the recorded report data')
     pool = load_dataset(data_dir, cohort='benchmark', use_base=True)
     created, closed = pool.metadata.created_at_utc, pool.metadata.closed_at_utc
     start, end, first = (pd.Timestamp(protocol[k]) for k in ['validation_start', 'validation_end', 'training_start'])
@@ -193,4 +196,8 @@ def verify(root):
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(); p.add_argument('root'); verify(p.parse_args().root)
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('root')
+    p.add_argument('--data-dir', type=Path, help='Relocated dataset; its identity must match the recorded run')
+    args = p.parse_args()
+    verify(args.root, args.data_dir)

@@ -103,6 +103,17 @@ class SharedTrainingTests(unittest.TestCase):
         self.assertEqual(session.fit_counts['h0'], sum(s['h0_supported'] for s in states.values()))
         self.assertEqual(session.cache_hits, 2)
 
+    def test_h0_has_only_pricing_inputs_and_no_terminal_placeholders(self):
+        from pp_models.h0 import H0, MODEL_INPUTS, probability_frame
+        self.assertEqual(len(MODEL_INPUTS), 6)
+        self.assertFalse(any('terminal' in c for c in MODEL_INPUTS))
+        x = pd.DataFrame(dict(option_type=[0, 1, 0, 1], api_base_price_per_btc_usdc=[100.]*4,
+            remaining_seconds=[3600.]*4, product_duration_seconds=[3600.]*4,
+            realized_vol_60m=[.01]*4, log_moneyness=[0.]*4))
+        model = H0().fit(probability_frame(x), pd.Series([200., 0., 200., 0.]))
+        np.testing.assert_allclose(model.predict_raw(x), [200., 0., 200., 0.])
+        with self.assertRaises(ValueError): model.predict_raw(x.assign(closed_at=0))
+
 
 if __name__ == '__main__':
     unittest.main()

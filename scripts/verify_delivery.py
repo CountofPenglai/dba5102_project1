@@ -60,12 +60,10 @@ def verify(run_dir=None, data_dir=None):
         'blend_c040_p015': [293.048025, 183.558057, 295.614043],
     }
     columns = ['macro_rmse_per_btc', 'macro_mae_per_btc', 'pooled_rmse_per_btc']
-    readme = (PROJECT/'README.md').read_text()
+    # Validate the published numerical evidence; the concise README links to it
+    # without duplicating the report's metric table.
     for name, values in expected.items():
         np.testing.assert_allclose(comparison.loc[name, columns].to_numpy(float), values, atol=5.1e-7, rtol=0)
-        for value in values:
-            if f'{value:.6f}' not in readme:
-                raise ValueError('README headline metric missing: '+str(value))
     summary = pd.read_csv(published/'validation/summary.csv')
     for month in ['2026-05', '2026-06']:
         group = summary.loc[summary.month.eq(month) & summary.group.eq('overall')].set_index('model')
